@@ -33,7 +33,7 @@ def hf_token() -> str | None:
 
         cached = get_token()
         if cached:
-            return cached
+            return str(cached)
     except ImportError:
         return None
     return None
