@@ -37,12 +37,13 @@ def _wait_for_health(url: str, timeout: float = 600.0) -> None:
 
 
 def run_demo(*, query: str, backend: str, serve_only: bool) -> int:
-    if not os.environ.get("HF_TOKEN") and not os.environ.get("HUGGINGFACE_HUB_TOKEN"):
-        console.print("[red]Set HF_TOKEN before running (gated models need it).[/red]")
-        console.print("  export HF_TOKEN=hf_...")
-        return 1
-
+    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
     model = hf_model_id()
+    if not token and "llama" in model.lower():
+        console.print("[red]Gated model requires HF_TOKEN.[/red]")
+        console.print("  export HF_TOKEN=hf_...")
+        console.print("  Or use default Qwen: unset ACE_HF_MODEL")
+        return 1
     four_bit = os.environ.get("ACE_HF_LOAD_4BIT", "0")
     console.print("\n[bold cyan]A.C.E + Hugging Face[/bold cyan]")
     console.print(f"  Model : {model}")

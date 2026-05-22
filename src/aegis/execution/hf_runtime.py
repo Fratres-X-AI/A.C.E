@@ -11,7 +11,8 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL = "meta-llama/Llama-3.2-1B-Instruct"
+# Ungated, tiny, fast — no Meta license click-through required.
+_DEFAULT_MODEL = "Qwen/Qwen2-0.5B-Instruct"
 _DEFAULT_HOST = "127.0.0.1"
 _DEFAULT_PORT = 8765
 _server_started = False
@@ -21,6 +22,11 @@ _model_bundle: dict[str, Any] | None = None
 
 def hf_model_id() -> str:
     return os.environ.get("ACE_HF_MODEL", _DEFAULT_MODEL)
+
+
+def hf_token() -> str | None:
+    raw = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+    return raw.strip() if raw else None
 
 
 def hf_server_url() -> str:
@@ -34,14 +40,23 @@ def _use_4bit() -> bool:
 
 
 def _max_new_tokens() -> int:
-    return int(os.environ.get("ACE_HF_MAX_NEW_TOKENS", "256"))
+    return int(os.environ.get("ACE_HF_MAX_NEW_TOKENS", "128"))
+
+
+def _pretrained_kwargs() -> dict[str, Any]:
+    kwargs: dict[str, Any] = {"trust_remote_code": True}
+    token = hf_token()
+    if token:
+        kwargs["token"] = token
+    return kwargs
 
 
 def login_hf() -> None:
-    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+    """Authenticate with HF hub when a token is present."""
+    token = hf_token()
     if not token:
-        msg = "Set HF_TOKEN (or HUGGINGFACE_HUB_TOKEN) for gated models."
-        raise RuntimeError(msg)
+        logger.info("No HF_TOKEN set — using public models only.")
+        return
     from huggingface_hub import login
 
     login(token=token, add_to_git_credential=False)
@@ -58,13 +73,14 @@ def load_model_bundle() -> dict[str, Any]:
 
     model_id = hf_model_id()
     logger.info("Loading HF model: %s (4bit=%s)", model_id, _use_4bit())
+    hub_kwargs = _pretrained_kwargs()
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, **hub_kwargs)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
     load_kwargs: dict[str, Any] = {
-        "trust_remote_code": True,
+        **hub_kwargs,
         "device_map": "auto",
     }
     if _use_4bit():
@@ -98,7 +114,7 @@ def generate_text(prompt: str, *, max_new_tokens: int | None = None) -> str:
                 tokenize=False,
                 add_generation_prompt=True,
             )
-        except Exception:
+        except (TypeError, ValueError, KeyError):
             text = prompt
     else:
         text = prompt
@@ -118,8 +134,8 @@ def generate_text(prompt: str, *, max_new_tokens: int | None = None) -> str:
 
 
 class _HFHandler(BaseHTTPRequestHandler):
-    def log_message(self, format: str, *args: Any) -> None:
-        logger.debug(format, *args)
+    def log_message(self, fmt: str, *args: Any) -> None:
+        logger.debug(fmt, *args)
 
     def do_GET(self) -> None:
         if self.path.rstrip("/") != "/health":

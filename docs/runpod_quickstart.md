@@ -35,19 +35,19 @@ The `process` backend runs `python -m aegis.sandbox._worker` in a **separate OS 
 
 ## Real Hugging Face model (small default)
 
-Uses **Llama-3.2-1B-Instruct** by default (~1.5GB download). Model loads once on GPU; containment runs through the same `process` backend.
+Uses **Qwen2-0.5B-Instruct** by default (~1GB, ungated — no license form). Model loads once on GPU; containment runs through the `process` backend.
 
 ```bash
 cd ~/A.C.E && git pull
-export HF_TOKEN=hf_your_token_here   # accept model license on huggingface.co first
 bash scripts/runpod_hf_setup.sh
 ```
 
-Optional custom small model:
+For gated models (Llama, etc.) pass your token **and** accept the model license on huggingface.co:
 
 ```bash
-export ACE_HF_MODEL=microsoft/Phi-3-mini-4k-instruct
-bash scripts/runpod_hf_setup.sh --query "What is information flow control?"
+export HF_TOKEN=hf_your_token_here
+export ACE_HF_MODEL=meta-llama/Llama-3.2-1B-Instruct
+bash scripts/runpod_hf_setup.sh
 ```
 
 First run downloads weights and installs PyTorch — allow a few minutes.
