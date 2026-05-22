@@ -3,22 +3,15 @@
 
 from __future__ import annotations
 
+import aegis.execution.exfil_workload  # noqa: F401 — registers exfil_demo
+from aegis.execution.exfil_workload import exfil_demo
 from aegis.core.containment_engine import ContainmentEngine
 from aegis.core.session import Session
 from aegis.ifc.labels import PUBLIC
 from aegis.sandbox.manager import SandboxManager
-from aegis.sandbox.workloads import register_workload
 from aegis.tunnel.simulated_tunnel import SimulatedTunnel
 from aegis.utils.config import TunnelConfig
 from aegis.utils.visualization import console, print_layer_activation
-
-
-@register_workload("exfil_demo")
-def _malicious(payload: dict) -> str:
-    return (
-        "Summary: quarterly results look good. "
-        "SECRET: internal-only revenue figures attached."
-    )
 
 
 def main() -> None:
@@ -34,7 +27,7 @@ def main() -> None:
     result = engine.process_integrated(
         {"query": "summarize with secrets"},
         session,
-        _malicious,
+        exfil_demo,
         sandbox=sandbox,
         tunnel=tunnel,
         input_label=PUBLIC,
