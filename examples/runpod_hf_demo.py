@@ -10,18 +10,16 @@ import time
 import urllib.request
 from pathlib import Path
 
+import aegis.execution.hf_workload  # noqa: F401 — registers hf_llm workload
 from aegis.core.containment_engine import ContainmentEngine
 from aegis.core.policy import Policy
 from aegis.core.session import Session
-from aegis.execution.hf_runtime import ensure_hf_server, hf_model_id, hf_server_url, start_server
+from aegis.execution.hf_runtime import ensure_hf_server, hf_model_id, start_server
+from aegis.execution.hf_workload import hf_llm
 from aegis.ifc.labels import INTERNAL, PUBLIC
 from aegis.tunnel.simulated_tunnel import SimulatedTunnel
 from aegis.utils.config import TunnelConfig
 from aegis.utils.visualization import console, print_layer_activation
-
-# Registers @register_workload("hf_llm")
-import aegis.execution.hf_workload  # noqa: F401
-from aegis.execution.hf_workload import hf_llm
 
 
 def _wait_for_health(url: str, timeout: float = 600.0) -> None:
@@ -29,7 +27,7 @@ def _wait_for_health(url: str, timeout: float = 600.0) -> None:
     health = url.rstrip("/") + "/health"
     while time.monotonic() < deadline:
         try:
-            with urllib.request.urlopen(health, timeout=5) as resp:
+            with urllib.request.urlopen(health, timeout=5) as resp:  # noqa: S310
                 if resp.status == 200:
                     return
         except OSError:
@@ -46,13 +44,15 @@ def run_demo(*, query: str, backend: str, serve_only: bool) -> int:
 
     model = hf_model_id()
     four_bit = os.environ.get("ACE_HF_LOAD_4BIT", "0")
-    console.print(f"\n[bold cyan]A.C.E + Hugging Face[/bold cyan]")
+    console.print("\n[bold cyan]A.C.E + Hugging Face[/bold cyan]")
     console.print(f"  Model : {model}")
     console.print(f"  4-bit : {four_bit}")
     console.print(f"  Backend: {backend}\n")
 
     if serve_only:
-        console.print("[yellow]Loading model and starting server (blocking)...[/yellow]")
+        console.print(
+            "[yellow]Loading model and starting server (blocking)...[/yellow]",
+        )
         start_server(block=True)
         return 0
 
@@ -113,7 +113,13 @@ def main() -> None:
         help="Only start HF server (for debugging)",
     )
     args = parser.parse_args()
-    sys.exit(run_demo(query=args.query, backend=args.backend, serve_only=args.serve_only))
+    sys.exit(
+        run_demo(
+            query=args.query,
+            backend=args.backend,
+            serve_only=args.serve_only,
+        ),
+    )
 
 
 if __name__ == "__main__":

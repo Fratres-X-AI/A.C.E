@@ -73,7 +73,7 @@ def load_model_bundle() -> dict[str, Any]:
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
-        }
+        )
     else:
         load_kwargs["torch_dtype"] = torch.bfloat16
 
