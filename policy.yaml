@@ -1,0 +1,16 @@
+# A.C.E default containment policy — policy-as-code
+policy:
+  default_sensitivity: INTERNAL
+  default_integrity: VERIFIED
+  allow_declassification: false
+  fail_closed: true
+  guardian:
+    max_entropy_bits_per_char: 5.5
+    max_output_bytes_per_minute: 50000
+    pii_patterns_enabled: true
+    canary_detection_enabled: true
+    anomaly_z_threshold: 2.5
+
+audit_dp_epsilon: null
+tee_simulation: true
+log_level: INFO

@@ -11,3 +11,7 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 *.egg
+
+# Local audit artifacts (regeneratable)
+artifacts/*.db
+artifacts/compliance_pack/

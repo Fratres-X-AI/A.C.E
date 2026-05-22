@@ -66,6 +66,8 @@ python examples/exfil_attempt_demo.py
 python examples/secure_agent_demo.py
 python examples/math_physics_advisor_demo.py
 python examples/containment_benchmark.py
+python examples/local_mock_agent_demo.py
+python scripts/export_compliance_pack.py
 
 # Test suite
 pytest --cov=aegis --cov-report=term-missing
@@ -102,7 +104,18 @@ mypy src/aegis
 | Tamper-proof log | Full audit reconstructability | O(1) append, O(n) verify |
 | Fail-closed policy | No silent bypass on ambiguity | May block edge cases |
 
-## Extension Guide
+## Local-Only Workflow (no Ollama / no cloud)
+
+Low-spec laptops can run the full stack with a **mock model** and export audit artifacts:
+
+```bash
+python examples/local_mock_agent_demo.py   # agent + IFC + persistent SQLite audit
+python scripts/export_compliance_pack.py   # benchmark + manifest + file hashes
+```
+
+Outputs land in `artifacts/compliance_pack/` with a `manifest.json` suitable for submissions.
+
+Default policy: [`policy.yaml`](policy.yaml)
 
 1. **Real TEE**: Use `create_tee_environment()` — Intel TDX / AMD SEV-SNP auto-detected; see `examples/tee_attestation_demo.py`
 2. **Scale EE**: Batch offline transforms for Llama-scale weights
