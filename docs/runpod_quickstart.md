@@ -21,17 +21,17 @@ That builds the `ace-aegis-sandbox:local` image (A.C.E + worker pre-installed) a
 
 ## RunPod GPU pods (nested containers)
 
-RunPod pods are usually **Docker containers themselves**. Bubblewrap often fails there (`--rlimit-as`, userns). Use Docker:
+RunPod pods **cannot create Linux namespaces** (bubblewrap fails) and usually have **no Docker**.
+
+Use **`auto`** (picks the `process` backend — separate worker subprocess) or explicitly:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/FratresMedAI/A.C.E/main/scripts/runpod_bootstrap.sh | bash -s -- --backend docker
+cd ~/A.C.E && git pull && bash scripts/runpod_smoke.sh --backend auto
+# or
+bash scripts/runpod_smoke.sh --backend process
 ```
 
-If you already cloned and bubblewrap failed:
-
-```bash
-cd ~/A.C.E && git pull && bash scripts/runpod_smoke.sh --backend docker
-```
+The `process` backend runs `python -m aegis.sandbox._worker` in a **separate OS process** with full IFC/guardians/audit. It does not use namespace isolation (RunPod limitation). For full isolation, deploy on a bare-metal VM with bubblewrap.
 
 ## Already cloned?
 

@@ -83,12 +83,14 @@ def test_registry_resolve_no_backends(monkeypatch: pytest.MonkeyPatch) -> None:
     from aegis.sandbox.backends.docker import DockerSandbox
     from aegis.sandbox.backends.firecracker import FirecrackerSandbox
     from aegis.sandbox.backends.gvisor import GVisorSandbox
+    from aegis.sandbox.backends.process import ProcessSandbox
 
     for backend_cls in (
         BubblewrapSandbox,
         GVisorSandbox,
         FirecrackerSandbox,
         DockerSandbox,
+        ProcessSandbox,
     ):
         monkeypatch.setattr(backend_cls, "is_available", lambda self: False)
 
@@ -159,6 +161,7 @@ def test_bubblewrap_backend_lifecycle(monkeypatch: pytest.MonkeyPatch) -> None:
     from aegis.sandbox.backends.bubblewrap import BubblewrapSandbox
 
     monkeypatch.setattr(bwrap_mod, "which", lambda _name: "/usr/bin/bwrap")
+    monkeypatch.setattr(bwrap_mod, "_bwrap_namespace_works", lambda: True)
 
     def fake_run(
         command: list[str],

@@ -42,7 +42,7 @@ if [[ "$use_docker" == "true" ]]; then
   bash scripts/build_sandbox_image.sh
 else
   if [[ "$in_container" == "true" ]]; then
-    echo "[ace] RunPod nested container — using bubblewrap (no Docker in pod)"
+    echo "[ace] RunPod nested container — auto will use process backend if bwrap fails"
   fi
   if ! command -v bwrap >/dev/null 2>&1; then
     echo "[ace] Installing bubblewrap..."

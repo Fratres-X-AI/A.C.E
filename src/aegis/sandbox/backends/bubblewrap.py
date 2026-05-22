@@ -14,7 +14,7 @@ _BWRAP = "bwrap"
 _rlimit_as_supported: bool | None = None
 
 
-def _running_in_container() -> bool:
+def running_in_container() -> bool:
     """True when already inside Docker/RunPod (no Docker-in-Docker)."""
     if Path("/.dockerenv").is_file():
         return True
@@ -23,6 +23,30 @@ def _running_in_container() -> bool:
     except OSError:
         return False
     return "docker" in cgroup or "containerd" in cgroup or "kubepods" in cgroup
+
+
+def _running_in_container() -> bool:
+    return running_in_container()
+
+
+def _bwrap_namespace_works() -> bool:
+    if which(_BWRAP) is None:
+        return False
+    if running_in_container():
+        cmd = [_BWRAP, "--ro-bind", "/", "/", "--", "true"]
+    else:
+        cmd = [
+            _BWRAP,
+            "--unshare-ipc",
+            "--die-with-parent",
+            "--ro-bind",
+            "/",
+            "/",
+            "--",
+            "true",
+        ]
+    result = run_command(cmd, timeout=10)
+    return result.returncode == 0
 
 
 def _bwrap_supports_rlimit_as() -> bool:
@@ -46,7 +70,9 @@ class BubblewrapSandbox(SandboxBackend):
     platforms = frozenset({"linux"})
 
     def is_available(self) -> bool:
-        return which(_BWRAP) is not None and sys.platform.startswith("linux")
+        if which(_BWRAP) is None or not sys.platform.startswith("linux"):
+            return False
+        return _bwrap_namespace_works()
 
     def create(self, create_config: SandboxCreateConfig) -> SandboxInfo:
         info = SandboxInfo(
@@ -107,27 +133,43 @@ class BubblewrapSandbox(SandboxBackend):
         self._instances.pop(sandbox_id, None)
 
     def _bwrap_base(self) -> list[str]:
+        nested = running_in_container()
         cmd = [_BWRAP]
-        # Nested containers (RunPod): skip userns — sysctl is often read-only.
-        if not _running_in_container():
+        if nested:
+            # RunPod pods: no namespace unshare (Operation not permitted).
+            cmd.extend(
+                [
+                    "--die-with-parent",
+                    "--ro-bind",
+                    "/",
+                    "/",
+                    "--dev",
+                    "/dev",
+                    "--proc",
+                    "/proc",
+                    "--tmpfs",
+                    "/tmp",
+                ],
+            )
+        else:
             cmd.append("--unshare-user")
-        cmd.extend(
-            [
-                "--unshare-ipc",
-                "--unshare-pid",
-                "--unshare-uts",
-                "--die-with-parent",
-                "--ro-bind",
-                "/",
-                "/",
-                "--dev",
-                "/dev",
-                "--proc",
-                "/proc",
-                "--tmpfs",
-                "/tmp",
-            ],
-        )
+            cmd.extend(
+                [
+                    "--unshare-ipc",
+                    "--unshare-pid",
+                    "--unshare-uts",
+                    "--die-with-parent",
+                    "--ro-bind",
+                    "/",
+                    "/",
+                    "--dev",
+                    "/dev",
+                    "--proc",
+                    "/proc",
+                    "--tmpfs",
+                    "/tmp",
+                ],
+            )
         if _bwrap_supports_rlimit_as():
             cmd.extend(
                 [
@@ -135,6 +177,6 @@ class BubblewrapSandbox(SandboxBackend):
                     str(self.config.memory_mb * 1024 * 1024),
                 ],
             )
-        if not self.config.network_enabled:
+        if not self.config.network_enabled and not nested:
             cmd.append("--unshare-net")
         return cmd

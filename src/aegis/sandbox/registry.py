@@ -7,10 +7,11 @@ import os
 import sys
 from typing import ClassVar
 
-from aegis.sandbox.backends.bubblewrap import BubblewrapSandbox
+from aegis.sandbox.backends.bubblewrap import BubblewrapSandbox, running_in_container
 from aegis.sandbox.backends.docker import DockerSandbox
 from aegis.sandbox.backends.firecracker import FirecrackerSandbox
 from aegis.sandbox.backends.gvisor import GVisorSandbox
+from aegis.sandbox.backends.process import ProcessSandbox
 from aegis.sandbox.base import SandboxBackend, SandboxBackendError
 from aegis.utils.config import SandboxConfig
 
@@ -28,6 +29,8 @@ def _load_windows_backend() -> type[SandboxBackend]:
 
 def _auto_order() -> tuple[str, ...]:
     if sys.platform.startswith("linux"):
+        if running_in_container():
+            return (*_linux_order, "process")
         return _linux_order
     if sys.platform == "win32":
         return _win_order
@@ -49,6 +52,7 @@ class SandboxRegistry:
         GVisorSandbox.name: GVisorSandbox,
         FirecrackerSandbox.name: FirecrackerSandbox,
         DockerSandbox.name: DockerSandbox,
+        ProcessSandbox.name: ProcessSandbox,
     }
 
     @classmethod

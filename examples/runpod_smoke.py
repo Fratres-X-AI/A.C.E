@@ -94,7 +94,7 @@ def main() -> None:
     parser.add_argument(
         "--backend",
         default="auto",
-        choices=["auto", "bubblewrap", "gvisor", "firecracker", "docker"],
+        choices=["auto", "bubblewrap", "gvisor", "firecracker", "docker", "process"],
         help="Sandbox backend (default: auto)",
     )
     args = parser.parse_args()
