@@ -43,7 +43,15 @@ math = ["sympy>=1.12.0"]
 sandbox = []
 tunnel = []
 runpod = ["requests>=2.31.0"]
-all = ["ace-aegis-containment[dev,math,runpod]"]
+hf = [
+    "torch>=2.2.0",
+    "transformers>=4.44.0",
+    "accelerate>=0.33.0",
+    "bitsandbytes>=0.43.0; sys_platform == 'linux'",
+    "huggingface-hub>=0.24.0",
+    "sentencepiece>=0.2.0",
+]
+all = ["ace-aegis-containment[dev,math,runpod,hf]"]
 
 [project.urls]
 Homepage = "https://github.com/FratresMedAI/A.C.E"
@@ -98,7 +106,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ANN", "PLR2004", "S101", "D103", "D100", "D104", "S105", "S310"]
-"examples/**/*.py" = ["T201", "INP001", "D103", "EXE001"]
+"examples/**/*.py" = ["T201", "INP001", "D103", "EXE001", "PLC0415"]
+"src/aegis/execution/hf_runtime.py" = ["PLC0415", "S310", "ANN401", "C901"]
+"src/aegis/execution/hf_workload.py" = ["S310"]
 "scripts/**/*.py" = ["T201", "D103", "EXE001"]
 "src/aegis/sandbox/backends/docker.py" = ["S603", "S607", "TRY300"]
 "src/aegis/sandbox/backends/_subprocess.py" = ["S603", "S607", "TRY300"]

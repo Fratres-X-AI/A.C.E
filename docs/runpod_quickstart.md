@@ -33,6 +33,25 @@ bash scripts/runpod_smoke.sh --backend process
 
 The `process` backend runs `python -m aegis.sandbox._worker` in a **separate OS process** with full IFC/guardians/audit. It does not use namespace isolation (RunPod limitation). For full isolation, deploy on a bare-metal VM with bubblewrap.
 
+## Real Hugging Face model (small default)
+
+Uses **Llama-3.2-1B-Instruct** by default (~1.5GB download). Model loads once on GPU; containment runs through the same `process` backend.
+
+```bash
+cd ~/A.C.E && git pull
+export HF_TOKEN=hf_your_token_here   # accept model license on huggingface.co first
+bash scripts/runpod_hf_setup.sh
+```
+
+Optional custom small model:
+
+```bash
+export ACE_HF_MODEL=microsoft/Phi-3-mini-4k-instruct
+bash scripts/runpod_hf_setup.sh --query "What is information flow control?"
+```
+
+First run downloads weights and installs PyTorch — allow a few minutes.
+
 ## Already cloned?
 
 ```bash
