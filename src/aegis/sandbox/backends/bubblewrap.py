@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 from typing import Any
 
 from aegis.sandbox.backends._subprocess import combined_output, run_command, which
@@ -11,6 +12,17 @@ from aegis.sandbox.environment import SandboxInfo
 
 _BWRAP = "bwrap"
 _rlimit_as_supported: bool | None = None
+
+
+def _running_in_container() -> bool:
+    """True when already inside Docker/RunPod (no Docker-in-Docker)."""
+    if Path("/.dockerenv").is_file():
+        return True
+    try:
+        cgroup = Path("/proc/1/cgroup").read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return "docker" in cgroup or "containerd" in cgroup or "kubepods" in cgroup
 
 
 def _bwrap_supports_rlimit_as() -> bool:
@@ -88,29 +100,34 @@ class BubblewrapSandbox(SandboxBackend):
             "exec_count": state.exec_count,
             "network_enabled": self.config.network_enabled,
             "seccomp_profile": self.config.seccomp_profile,
+            "nested_container": _running_in_container(),
         }
 
     def destroy(self, sandbox_id: str) -> None:
         self._instances.pop(sandbox_id, None)
 
     def _bwrap_base(self) -> list[str]:
-        cmd = [
-            _BWRAP,
-            "--unshare-user",
-            "--unshare-ipc",
-            "--unshare-pid",
-            "--unshare-uts",
-            "--die-with-parent",
-            "--ro-bind",
-            "/",
-            "/",
-            "--dev",
-            "/dev",
-            "--proc",
-            "/proc",
-            "--tmpfs",
-            "/tmp",
-        ]
+        cmd = [_BWRAP]
+        # RunPod pods are nested containers — user namespaces often fail (read-only sysctl).
+        if not _running_in_container():
+            cmd.append("--unshare-user")
+        cmd.extend(
+            [
+                "--unshare-ipc",
+                "--unshare-pid",
+                "--unshare-uts",
+                "--die-with-parent",
+                "--ro-bind",
+                "/",
+                "/",
+                "--dev",
+                "/dev",
+                "--proc",
+                "/proc",
+                "--tmpfs",
+                "/tmp",
+            ],
+        )
         if _bwrap_supports_rlimit_as():
             cmd.extend(
                 [

@@ -12,26 +12,38 @@ fi
 echo "[ace] RunPod smoke setup in $ROOT"
 
 in_container=false
-if [[ -f /.dockerenv ]] || grep -qaE 'docker|containerd' /proc/1/cgroup 2>/dev/null; then
+if [[ -f /.dockerenv ]] || grep -qaE 'docker|containerd|kubepods' /proc/1/cgroup 2>/dev/null; then
   in_container=true
-  echo "[ace] Nested container detected (RunPod pod) — preferring Docker backend"
+fi
+
+docker_ok=false
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  docker_ok=true
 fi
 
 use_docker=false
 if [[ "$BACKEND" == "docker" ]]; then
-  use_docker=true
-elif [[ "$BACKEND" == "auto" ]] && [[ "$in_container" == "true" ]]; then
-  use_docker=true
-elif [[ "$BACKEND" == "auto" ]] && command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
-  if ! command -v bwrap >/dev/null 2>&1; then
-    use_docker=true
+  if [[ "$docker_ok" != "true" ]]; then
+    echo "[ace] ERROR: Docker not available inside this pod."
+    echo "      RunPod GPU pods usually cannot run Docker-in-Docker."
+    echo "      Use bubblewrap instead:"
+    echo "        bash scripts/runpod_smoke.sh --backend bubblewrap"
+    exit 1
   fi
+  use_docker=true
+elif [[ "$BACKEND" == "auto" ]] && [[ "$docker_ok" == "true" ]] && [[ "$in_container" != "true" ]]; then
+  use_docker=true
+elif [[ "$BACKEND" == "auto" ]] && [[ "$docker_ok" == "true" ]] && ! command -v bwrap >/dev/null 2>&1; then
+  use_docker=true
 fi
 
 if [[ "$use_docker" == "true" ]]; then
   echo "[ace] Using Docker backend — building sandbox image if needed..."
   bash scripts/build_sandbox_image.sh
 else
+  if [[ "$in_container" == "true" ]]; then
+    echo "[ace] RunPod nested container — using bubblewrap (no Docker in pod)"
+  fi
   if ! command -v bwrap >/dev/null 2>&1; then
     echo "[ace] Installing bubblewrap..."
     if command -v apt-get >/dev/null 2>&1; then
@@ -39,8 +51,7 @@ else
       apt-get update -qq
       apt-get install -y bubblewrap
     else
-      echo "[ace] bubblewrap not found. Use Docker instead:"
-      echo "      bash scripts/runpod_smoke.sh --backend docker"
+      echo "[ace] ERROR: bubblewrap not found and cannot install via apt-get."
       exit 1
     fi
   fi
