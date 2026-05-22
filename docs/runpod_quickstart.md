@@ -52,19 +52,26 @@ bash scripts/runpod_hf_setup.sh
 
 First run downloads weights and installs PyTorch — allow a few minutes.
 
-## External Llama / chat API (no GPU, no HF download)
+## Hugging Face Inference API — Llama (no GPU, no weight download)
 
-If you have an OpenAI-compatible Llama API (Together, Groq, Fireworks, etc.):
+Uses the [HF Inference Router](https://huggingface.co/docs/inference-providers) — same as the "Inference Providers" UI on the model page. Your existing `HF_TOKEN` is the API key.
 
 ```bash
 cd ~/A.C.E && git pull
-export ACE_LLM_API_KEY=your_key_here
-export ACE_LLM_API_BASE=https://api.together.xyz/v1   # your provider base URL
-export ACE_LLM_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
+export HF_TOKEN=hf_your_token_here
 bash scripts/runpod_api_setup.sh
 ```
 
-No `HF_TOKEN`, no weight download, no GPU required on the pod.
+Defaults: `meta-llama/Llama-3.1-8B-Instruct:novita` via `https://router.huggingface.co/v1`.
+
+Change provider by setting the model suffix (e.g. `:cerebras`, `:nscale`) or pick **Fastest** routing in the HF UI and copy the model string:
+
+```bash
+export ACE_LLM_MODEL=meta-llama/Llama-3.1-8B-Instruct:cerebras
+bash scripts/runpod_api_setup.sh
+```
+
+Other OpenAI-compatible providers (Together, Groq, etc.) still work via `ACE_LLM_API_BASE` + `ACE_LLM_API_KEY`.
 
 ## Already cloned?
 

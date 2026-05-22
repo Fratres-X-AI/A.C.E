@@ -10,21 +10,27 @@ from typing import Any
 
 from aegis.sandbox.workloads import register_workload
 
+_DEFAULT_API_BASE = "https://router.huggingface.co/v1"
+_DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct:novita"
+
 
 def api_base() -> str:
-    return os.environ.get("ACE_LLM_API_BASE", "").rstrip("/")
+    raw = os.environ.get("ACE_LLM_API_BASE", _DEFAULT_API_BASE)
+    return raw.rstrip("/")
 
 
 def api_key() -> str | None:
-    raw = os.environ.get("ACE_LLM_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    raw = (
+        os.environ.get("ACE_LLM_API_KEY")
+        or os.environ.get("HF_TOKEN")
+        or os.environ.get("HUGGINGFACE_HUB_TOKEN")
+        or os.environ.get("OPENAI_API_KEY")
+    )
     return raw.strip() if raw else None
 
 
 def api_model() -> str:
-    return os.environ.get(
-        "ACE_LLM_MODEL",
-        "meta-llama/Meta-Llama-3-8B-Instruct",
-    )
+    return os.environ.get("ACE_LLM_MODEL", _DEFAULT_MODEL)
 
 
 def completions_url() -> str:
@@ -33,7 +39,7 @@ def completions_url() -> str:
         return explicit.rstrip("/")
     base = api_base()
     if not base:
-        msg = "Set ACE_LLM_API_BASE (e.g. https://api.together.xyz/v1)"
+        msg = "Set ACE_LLM_API_BASE (default: https://router.huggingface.co/v1)"
         raise RuntimeError(msg)
     return f"{base}/chat/completions"
 
@@ -45,8 +51,8 @@ def verify_api_config() -> dict[str, Any]:
         return {
             "ok": False,
             "error": (
-                "No API key found. Set ACE_LLM_API_KEY=... "
-                "(or OPENAI_API_KEY)."
+                "No API key found. Set HF_TOKEN=hf_... "
+                "(or ACE_LLM_API_KEY / OPENAI_API_KEY)."
             ),
         }
     try:
