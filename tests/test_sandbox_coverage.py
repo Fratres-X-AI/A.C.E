@@ -79,9 +79,19 @@ def test_registry_get_unavailable_raises(monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def test_registry_resolve_no_backends(monkeypatch: pytest.MonkeyPatch) -> None:
+    from aegis.sandbox.backends.bubblewrap import BubblewrapSandbox
     from aegis.sandbox.backends.docker import DockerSandbox
+    from aegis.sandbox.backends.firecracker import FirecrackerSandbox
+    from aegis.sandbox.backends.gvisor import GVisorSandbox
 
-    monkeypatch.setattr(DockerSandbox, "is_available", lambda self: False)
+    for backend_cls in (
+        BubblewrapSandbox,
+        GVisorSandbox,
+        FirecrackerSandbox,
+        DockerSandbox,
+    ):
+        monkeypatch.setattr(backend_cls, "is_available", lambda self: False)
+
     with pytest.raises(SandboxBackendError, match="No sandbox backend"):
         SandboxRegistry.resolve(SandboxConfig(backend="auto"))
 
