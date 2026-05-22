@@ -11,8 +11,16 @@ fi
 
 echo "[ace] RunPod smoke setup in $ROOT"
 
+in_container=false
+if [[ -f /.dockerenv ]] || grep -qaE 'docker|containerd' /proc/1/cgroup 2>/dev/null; then
+  in_container=true
+  echo "[ace] Nested container detected (RunPod pod) — preferring Docker backend"
+fi
+
 use_docker=false
 if [[ "$BACKEND" == "docker" ]]; then
+  use_docker=true
+elif [[ "$BACKEND" == "auto" ]] && [[ "$in_container" == "true" ]]; then
   use_docker=true
 elif [[ "$BACKEND" == "auto" ]] && command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   if ! command -v bwrap >/dev/null 2>&1; then

@@ -10,6 +10,20 @@ from aegis.sandbox.base import SandboxBackend, SandboxBackendError, SandboxCreat
 from aegis.sandbox.environment import SandboxInfo
 
 _BWRAP = "bwrap"
+_rlimit_as_supported: bool | None = None
+
+
+def _bwrap_supports_rlimit_as() -> bool:
+    global _rlimit_as_supported  # noqa: PLW0603
+    if _rlimit_as_supported is not None:
+        return _rlimit_as_supported
+    if which(_BWRAP) is None:
+        _rlimit_as_supported = False
+        return False
+    result = run_command([_BWRAP, "--help"], timeout=10)
+    help_text = combined_output(result)
+    _rlimit_as_supported = "--rlimit-as" in help_text
+    return _rlimit_as_supported
 
 
 class BubblewrapSandbox(SandboxBackend):
@@ -96,9 +110,14 @@ class BubblewrapSandbox(SandboxBackend):
             "/proc",
             "--tmpfs",
             "/tmp",
-            "--rlimit-as",
-            str(self.config.memory_mb * 1024 * 1024),
         ]
+        if _bwrap_supports_rlimit_as():
+            cmd.extend(
+                [
+                    "--rlimit-as",
+                    str(self.config.memory_mb * 1024 * 1024),
+                ],
+            )
         if not self.config.network_enabled:
             cmd.append("--unshare-net")
         return cmd

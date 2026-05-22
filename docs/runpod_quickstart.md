@@ -19,18 +19,18 @@ bash scripts/runpod_smoke.sh --backend docker
 
 That builds the `ace-aegis-sandbox:local` image (A.C.E + worker pre-installed) and runs the full integrated smoke test.
 
-## One command (fresh RunPod pod, bubblewrap path)
+## RunPod GPU pods (nested containers)
 
-Paste into the RunPod terminal:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/FratresMedAI/A.C.E/main/scripts/runpod_bootstrap.sh | bash
-```
-
-For Docker on RunPod instead:
+RunPod pods are usually **Docker containers themselves**. Bubblewrap often fails there (`--rlimit-as`, userns). Use Docker:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/FratresMedAI/A.C.E/main/scripts/runpod_bootstrap.sh | bash -s -- --backend docker
+```
+
+If you already cloned and bubblewrap failed:
+
+```bash
+cd ~/A.C.E && git pull && bash scripts/runpod_smoke.sh --backend docker
 ```
 
 ## Already cloned?
