@@ -47,7 +47,7 @@ def resolve_hf_token() -> str | None:
 def verify_hf_auth(model_id: str | None = None) -> dict[str, Any]:
     """Check token validity, HF username, and optional gated-model access."""
     from huggingface_hub import HfApi
-    from huggingface_hub.utils import GatedRepoError, HfHubHTTPError
+    from huggingface_hub.errors import GatedRepoError, HfHubHTTPError
 
     target = model_id or hf_model_id()
     token = resolve_hf_token()
@@ -94,13 +94,17 @@ def verify_hf_auth(model_id: str | None = None) -> dict[str, Any]:
             ),
         }
     except HfHubHTTPError as exc:
+        err: dict[str, Any] = {
+            "ok": False,
+            "error": (
+                f"Cannot reach {target!r} as @{username}: {exc}"
+                if username
+                else f"Cannot reach {target!r}: {exc}"
+            ),
+        }
         if username:
-            return {
-                "ok": False,
-                "username": username,
-                "error": f"Cannot reach {target!r} as @{username}: {exc}",
-            }
-        return {"ok": False, "error": f"Cannot reach {target!r}: {exc}"}
+            err["username"] = username
+        return err
 
     result: dict[str, Any] = {"ok": True, "model": target}
     if username:
@@ -221,7 +225,7 @@ def generate_text(prompt: str, *, max_new_tokens: int | None = None) -> str:
             pad_token_id=tokenizer.pad_token_id,
         )
     generated = outputs[0][inputs["input_ids"].shape[-1] :]
-    return tokenizer.decode(generated, skip_special_tokens=True).strip()
+    return str(tokenizer.decode(generated, skip_special_tokens=True).strip())
 
 
 class _HFHandler(BaseHTTPRequestHandler):

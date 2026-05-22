@@ -135,6 +135,14 @@ packages = ["aegis"]
 module = ["sympy.*"]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["huggingface_hub.*", "transformers.*", "torch.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["aegis.execution.hf_runtime"]
+disable_error_code = ["attr-defined", "no-untyped-call"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
