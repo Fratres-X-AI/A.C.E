@@ -5,7 +5,7 @@ from __future__ import annotations
 import struct
 import sys
 from pathlib import Path
-from typing import Final
+from typing import Any, Final, cast
 
 # TDX guest driver (Linux 6.8+): tdx_report_req = report_data[64] + tdreport[1024]
 TDX_REPORT_DATA_SIZE: Final = 64
@@ -36,22 +36,23 @@ def first_existing_path(paths: tuple[str, ...]) -> str | None:
     return None
 
 
+def _ioctl(device: object, command: int, payload: bytes) -> bytes:
+    """Invoke fcntl.ioctl with platform-specific overloads hidden from mypy."""
+    fcntl = cast("Any", __import__("fcntl"))
+    result = fcntl.ioctl(device, command, payload, True)
+    return result if isinstance(result, bytes) else bytes(result)
+
+
 def tdx_get_report(device_path: str, nonce: str) -> bytes | None:
     """Issue TDX_CMD_GET_REPORT0 ioctl and return TDREPORT bytes."""
     if not is_linux():
         return None
-    import fcntl
 
     report_data = hashlib_nonce_to_report_data(nonce)
     req = report_data + bytes(TDX_TDREPORT_SIZE)
     try:
         with Path(device_path).open("rb") as dev:
-            mutated = fcntl.ioctl(  # type: ignore[attr-defined]
-                dev,
-                TDX_CMD_GET_REPORT0,
-                req,
-                mutate_flag=True,
-            )
+            mutated = _ioctl(dev, TDX_CMD_GET_REPORT0, req)
         if isinstance(mutated, bytes) and len(mutated) >= TDX_REPORT_REQ_SIZE:
             end = TDX_REPORT_DATA_SIZE + TDX_TDREPORT_SIZE
             return mutated[TDX_REPORT_DATA_SIZE:end]
@@ -66,7 +67,6 @@ def sev_snp_get_report(device_path: str, nonce: str) -> bytes | None:
     """Issue SNP_GET_REPORT ioctl and return guest attestation report."""
     if not is_linux():
         return None
-    import fcntl
 
     report_data = hashlib_nonce_to_report_data(nonce)
     msg_version = struct.pack("Q", 1)
@@ -77,12 +77,7 @@ def sev_snp_get_report(device_path: str, nonce: str) -> bytes | None:
     )
     try:
         with Path(device_path).open("rb") as dev:
-            mutated = fcntl.ioctl(  # type: ignore[attr-defined]
-                dev,
-                SEV_CMD_GET_REPORT,
-                payload,
-                mutate_flag=True,
-            )
+            mutated = _ioctl(dev, SEV_CMD_GET_REPORT, payload)
         if isinstance(mutated, bytes) and len(mutated) >= SEV_SNP_REPORT_SIZE:
             return mutated[-SEV_SNP_REPORT_SIZE:]
     except OSError:
