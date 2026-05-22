@@ -153,3 +153,106 @@ class ContainmentSimulator:
             catch_rate=caught_count / total if total else 1.0,
             results=results,
         )
+
+    def run_integrated_all(self) -> ContainmentReport:
+        """Cross-boundary scenarios through sandbox + tunnel pipeline."""
+        from aegis.sandbox.labels import default_sandbox_clearance
+        from aegis.sandbox.simulated_sandbox import SimulatedSandbox
+        from aegis.tunnel.policy_endpoint import (
+            PolicyControlledEndpoint,
+            TunnelPolicyError,
+        )
+        from aegis.tunnel.simulated_tunnel import SimulatedTunnel
+        from aegis.utils.config import SandboxConfig, TunnelConfig
+
+        results: list[ScenarioResult] = []
+
+        # tunnel_policy_bypass
+        tunnel_cfg = TunnelConfig(
+            allowed_routes=["/inference", "/health"],
+            require_capability_token=True,
+        )
+        tunnel = SimulatedTunnel(config=tunnel_cfg)
+        session = Session()
+        session.issue_capability("tunnel")
+        try:
+            endpoint = PolicyControlledEndpoint(config=tunnel_cfg)
+            endpoint.validate_route("/admin/backdoor")
+            caught = False
+            verdict = ContainmentVerdict.ALLOW
+            reasons: list[str] = []
+        except TunnelPolicyError as exc:
+            caught = True
+            verdict = ContainmentVerdict.BLOCK
+            reasons = [str(exc)]
+        results.append(
+            ScenarioResult(
+                name="tunnel_policy_bypass",
+                caught=caught,
+                verdict=verdict,
+                reasons=reasons,
+            ),
+        )
+        tunnel.close()
+
+        # sandbox_label_escape
+        public_clearance = default_sandbox_clearance("PUBLIC")
+        secret_label = SECRET
+        sandbox = SimulatedSandbox(config=SandboxConfig(memory_mb=512))
+        sandbox.create(public_clearance)
+        try:
+            sandbox.run_labeled(lambda p: "leak", {}, secret_label)
+            caught = False
+            verdict = ContainmentVerdict.ALLOW
+            reasons = []
+        except PermissionError as exc:
+            caught = True
+            verdict = ContainmentVerdict.BLOCK
+            reasons = [str(exc)]
+        results.append(
+            ScenarioResult(
+                name="sandbox_label_escape",
+                caught=caught,
+                verdict=verdict,
+                reasons=reasons,
+            ),
+        )
+        sandbox.destroy()
+
+        # cross_boundary_exfil
+        tunnel2 = SimulatedTunnel(config=tunnel_cfg)
+        sandbox2 = SimulatedSandbox()
+        session2 = Session()
+        session2.issue_capability("tunnel")
+
+        def exfil_fn(payload: dict[str, Any]) -> str:
+            return "Public summary with SECRET payload embedded"
+
+        integrated = self.engine.process_integrated(
+            {"query": "summarize"},
+            session2,
+            exfil_fn,
+            sandbox=sandbox2,
+            tunnel=tunnel2,
+            input_label=INTERNAL,
+            output_clearance=PUBLIC,
+        )
+        caught = integrated.blocked or integrated.verdict != ContainmentVerdict.ALLOW
+        results.append(
+            ScenarioResult(
+                name="cross_boundary_exfil",
+                caught=caught,
+                verdict=integrated.verdict,
+                reasons=integrated.reasons,
+            ),
+        )
+        tunnel2.close()
+
+        caught_count = sum(1 for r in results if r.caught)
+        total = len(results)
+        return ContainmentReport(
+            scenarios_run=total,
+            scenarios_caught=caught_count,
+            catch_rate=caught_count / total if total else 1.0,
+            results=results,
+        )

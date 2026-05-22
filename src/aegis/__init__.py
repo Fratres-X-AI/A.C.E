@@ -8,7 +8,7 @@ from aegis.core.containment_engine import ContainmentEngine
 from aegis.core.session import Session
 from aegis.utils.typing import ContainmentResult, ContainmentVerdict
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = [
     "ContainmentEngine",
     "ContainmentResult",

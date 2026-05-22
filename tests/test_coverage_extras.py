@@ -18,6 +18,10 @@ from aegis.guardians.verification import VerificationEngine
 from aegis.ifc.flow_control import FlowControlEngine
 from aegis.ifc.labels import INTERNAL, PUBLIC, SECRET
 from aegis.redteam.canary import CanaryManager
+from aegis.sandbox.docker_sandbox import DockerSandbox
+from aegis.sandbox.manager import SandboxManager
+from aegis.sandbox.simulated_sandbox import SimulatedSandbox
+from aegis.utils.config import SandboxConfig
 from aegis.utils.typing import ContainmentVerdict
 
 
@@ -96,6 +100,31 @@ def test_flow_effective_output_label() -> None:
     flow = FlowControlEngine()
     with pytest.raises(PermissionError):
         flow.effective_output_label([SECRET, INTERNAL], PUBLIC)
+
+
+def test_policy_sandbox_tunnel_accessors() -> None:
+    policy = Policy()
+    assert policy.sandbox_config().runtime == "auto"
+    assert "/inference" in policy.tunnel_allowed_routes()
+
+
+def test_docker_sandbox_inspect_not_created() -> None:
+    sb = DockerSandbox()
+    assert sb.inspect()["status"] == "not_created"
+
+
+def test_sandbox_manager_simulated_runtime() -> None:
+    manager = SandboxManager(SandboxConfig(runtime="simulated"))
+    assert manager.create_sandbox().runtime_name == "simulated"
+
+
+def test_simulated_sandbox_exec_and_network() -> None:
+    sandbox = SimulatedSandbox()
+    sandbox.create(INTERNAL)
+    assert "simulated-exec" in sandbox.exec(["echo", "hi"])
+    with pytest.raises(PermissionError):
+        sandbox.run_labeled(lambda p: "x", {"requires_network": True}, INTERNAL)
+    sandbox.destroy()
 
 
 def test_capability_token() -> None:

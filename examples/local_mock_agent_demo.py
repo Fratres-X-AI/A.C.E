@@ -98,6 +98,30 @@ def main() -> None:
     console.print(f"  Persistent audit DB: {audit_db}")
     print_metrics_table(engine.metrics.snapshot())
 
+    # Optional integrated sandbox + tunnel path
+    from aegis.sandbox.manager import SandboxManager
+    from aegis.tunnel.simulated_tunnel import SimulatedTunnel
+
+    integrated_session = Session()
+    integrated_session.issue_capability("integrated")
+    sandbox = SandboxManager(policy.policy.sandbox).create_sandbox()
+    tunnel = SimulatedTunnel(config=policy.policy.tunnel)
+    integrated = engine.process_integrated(
+        {"query": "integrated smoke test"},
+        integrated_session,
+        safe_query,
+        sandbox=sandbox,
+        tunnel=tunnel,
+        input_label=PUBLIC,
+        output_clearance=PUBLIC,
+    )
+    print_layer_activation(
+        "Integrated path",
+        "PASS" if not integrated.blocked else "BLOCK",
+        integrated.output[:40] if integrated.output else "blocked",
+    )
+    tunnel.close()
+
 
 if __name__ == "__main__":
     main()

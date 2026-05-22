@@ -64,3 +64,25 @@ class ContainmentResult:
     reasons: list[str] = field(default_factory=list)
     metrics_snapshot: dict[str, float | int] = field(default_factory=dict)
     audit_event_count: int = 0
+    sandbox_id: str | None = None
+    tunnel_endpoint_id: str | None = None
+
+
+@dataclass
+class SandboxSnapshot:
+    """Point-in-time sandbox state for rollback."""
+
+    snapshot_id: str
+    sandbox_id: str
+    label: str
+    created_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
+
+
+@dataclass
+class TunnelRequest:
+    """Request crossing a tunnel gateway boundary."""
+
+    route: str
+    payload: dict[str, Any]
+    session_id: str
+    label: str

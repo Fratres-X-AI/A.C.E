@@ -31,6 +31,8 @@ print(result.output)
 
 ## RunPod
 
+### Basic handler wrapping
+
 1. Deploy container with A.C.E installed (`pip install -e .`)
 2. Wrap RunPod handler with `InstrumentedRunner`
 3. Bind session to RunPod pod ID for audit correlation
@@ -44,6 +46,47 @@ log = TamperProofLog()
 runner = InstrumentedRunner(audit_log=log)
 output = runner.run(your_handler, {"input": "..."})
 ```
+
+### RunPod integrated (v0.2.0)
+
+Deploy A.C.E inside a RunPod pod with Docker enabled for real sandbox isolation:
+
+```python
+from aegis.core.containment_engine import ContainmentEngine
+from aegis.core.policy import Policy
+from aegis.core.session import Session
+from aegis.ifc.labels import INTERNAL, PUBLIC
+from aegis.sandbox.manager import SandboxManager
+from aegis.tunnel.providers import generate_cloudflare_config
+from aegis.tunnel.simulated_tunnel import SimulatedTunnel
+
+policy = Policy.from_file("policy.yaml")
+engine = ContainmentEngine(policy=policy)
+session = Session()
+session.issue_capability("runpod-inference")
+
+sandbox = SandboxManager(policy.policy.sandbox).create_sandbox()
+tunnel = SimulatedTunnel(config=policy.policy.tunnel)
+
+result = engine.process_integrated(
+    {"query": "summarize"},
+    session,
+    your_vllm_handler,
+    sandbox=sandbox,
+    tunnel=tunnel,
+    input_label=INTERNAL,
+    output_clearance=PUBLIC,
+)
+
+# Optional: expose via Cloudflare Tunnel manifest
+manifest = generate_cloudflare_config(
+    "ace-runpod",
+    "inference.yourdomain.com",
+    service_url="http://localhost:8080",
+)
+```
+
+For production, replace `SimulatedTunnel` with a Cloudflare or WireGuard deployment using configs from `aegis.tunnel.providers`.
 
 ## TEE Integration
 

@@ -44,6 +44,9 @@ class Session:
     capability: CapabilityToken | None = None
     label_map: dict[str, SecurityLabel] = field(default_factory=dict)
     canary_tokens: list[str] = field(default_factory=list)
+    sandbox_id: str | None = None
+    tunnel_endpoint_id: str | None = None
+    sandbox_label: SecurityLabel | None = None
 
     def bind_tee(self, nonce: str | None = None) -> AttestationQuote:
         self.attestation = self.tee.attest(nonce)

@@ -24,33 +24,30 @@ flowchart TB
         EE[EquivariantTransform]
         Labels[IFCLabels]
     end
-    subgraph execution [Execution]
-        TEE[TEEAbstraction]
+    subgraph boundary [Boundary]
+        TunnelIn[TunnelIngressGate]
+        Sandbox[SandboxRuntime]
         Runner[InstrumentedRunner]
-        MathPhys[MathPhysicsInterface]
     end
     subgraph egress [Egress]
         Guardian[OutputGuardian]
+        TunnelOut[TunnelEgressGate]
         EgressCtrl[EgressController]
-        Verify[StructuredVerification]
     end
     subgraph audit [Audit]
         Log[TamperProofLog]
         Metrics[ContainmentMetrics]
     end
-    subgraph redteam [RedTeam]
-        Sim[ContainmentSimulator]
-        Canary[CanaryTokens]
-    end
     Input --> EncFields --> EE --> Labels
-    Labels --> TEE --> Runner --> MathPhys
-    Runner --> Guardian --> Verify --> EgressCtrl
+    Labels --> TunnelIn
+    TunnelIn -->|"IFC + policy allow"| Sandbox
+    Sandbox --> Runner
+    Runner --> Guardian --> TunnelOut --> EgressCtrl
+    TunnelIn --> Log
+    Sandbox --> Log
     Guardian --> Log
-    EgressCtrl --> Log
+    TunnelOut --> Log
     Log --> Metrics
-    Sim -.-> ingress
-    Sim -.-> egress
-    Canary -.-> Guardian
 ```
 
 ## Quickstart
@@ -67,6 +64,9 @@ python examples/secure_agent_demo.py
 python examples/math_physics_advisor_demo.py
 python examples/containment_benchmark.py
 python examples/local_mock_agent_demo.py
+python examples/integrated_sandbox_tunnel_demo.py
+python examples/sandbox_exfil_demo.py
+python examples/label_propagation_demo.py
 python scripts/export_compliance_pack.py
 
 # Test suite
@@ -92,6 +92,8 @@ mypy src/aegis
 | Tamper-Proof Log | `audit/tamper_proof_log` | Hash-chained append-only audit trail |
 | Metrics | `audit/metrics` | Containment effectiveness score, compliance export |
 | Red-Team Simulator | `redteam/simulator` | Self-auditing stress tests |
+| Sandbox Runtime | `sandbox/` | Docker + simulated isolation with label binding |
+| Tunnel Gateway | `tunnel/` | Policy-controlled ingress/egress with MCP adapter |
 
 ## Trade-offs
 
@@ -103,6 +105,9 @@ mypy src/aegis
 | IFC enforcement | Blocks illegal label flows | O(steps) per request |
 | Tamper-proof log | Full audit reconstructability | O(1) append, O(n) verify |
 | Fail-closed policy | No silent bypass on ambiguity | May block edge cases |
+| Docker sandbox | Real kernel isolation | Container startup overhead |
+| Simulated sandbox | Zero deps, CI-friendly | No kernel isolation |
+| Tunnel policy gate | Zero-trust boundary control | Per-request validation latency |
 
 ## Local-Only Workflow (no Ollama / no cloud)
 
@@ -121,7 +126,13 @@ Default policy: [`policy.yaml`](policy.yaml)
 2. **Scale EE**: Batch offline transforms for Llama-scale weights
 3. **LLM Judge**: Replace `llm_judge_stub` with verifier model API
 4. **Policy-as-code**: Load YAML from `Policy.from_file("policy.yaml")`
-5. **Ollama/RunPod**: Wrap inference in `InstrumentedRunner` (see `docs/integration_guide.md`)
+5. **Ollama/RunPod**: Wrap inference in `InstrumentedRunner` or `process_integrated()` (see `docs/integration_guide.md`)
+
+## Known Limitations (v0.2.0)
+
+- Simulated sandbox is not kernel isolation; use Docker on RunPod for real boundaries
+- MCP adapter is a secure RPC pattern, not full MCP server spec compliance
+- Cloudflare/Tailscale configs are templates requiring manual daemon deployment
 
 ## DIU / Gov Compliance Notes
 
@@ -138,5 +149,6 @@ AGPLv3 — see [LICENSE](LICENSE).
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Sandbox + Tunnel](docs/sandbox_tunnel.md)
 - [Integration Guide](docs/integration_guide.md)
 - [Extension Roadmap](docs/extension_roadmap.md)

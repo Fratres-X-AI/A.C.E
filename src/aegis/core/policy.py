@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from aegis.utils.config import ACEConfig, PolicyConfig
+from aegis.utils.config import ACEConfig, PolicyConfig, SandboxConfig
 
 
 class Policy:
@@ -47,3 +47,9 @@ class Policy:
 
     def rate_limit_bytes_per_minute(self) -> int:
         return self.policy.guardian.max_output_bytes_per_minute
+
+    def sandbox_config(self) -> SandboxConfig:
+        return self.policy.sandbox
+
+    def tunnel_allowed_routes(self) -> list[str]:
+        return list(self.policy.tunnel.allowed_routes)
