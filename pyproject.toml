@@ -109,6 +109,7 @@ ignore = [
 "examples/**/*.py" = ["T201", "INP001", "D103", "EXE001", "PLC0415"]
 "src/aegis/execution/hf_runtime.py" = ["PLC0415", "S310", "ANN401", "C901"]
 "src/aegis/execution/hf_workload.py" = ["S310"]
+"src/aegis/execution/api_llm_workload.py" = ["S310"]
 "scripts/**/*.py" = ["T201", "D103", "EXE001"]
 "src/aegis/sandbox/backends/docker.py" = ["S603", "S607", "TRY300"]
 "src/aegis/sandbox/backends/_subprocess.py" = ["S603", "S607", "TRY300"]

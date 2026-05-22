@@ -16,6 +16,7 @@ def _load_builtin_workloads() -> None:
     for module_name in (
         "aegis.execution.mock_model",
         "aegis.execution.hf_workload",
+        "aegis.execution.api_llm_workload",
     ):
         importlib.import_module(module_name)
 

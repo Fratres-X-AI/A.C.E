@@ -52,6 +52,20 @@ bash scripts/runpod_hf_setup.sh
 
 First run downloads weights and installs PyTorch — allow a few minutes.
 
+## External Llama / chat API (no GPU, no HF download)
+
+If you have an OpenAI-compatible Llama API (Together, Groq, Fireworks, etc.):
+
+```bash
+cd ~/A.C.E && git pull
+export ACE_LLM_API_KEY=your_key_here
+export ACE_LLM_API_BASE=https://api.together.xyz/v1   # your provider base URL
+export ACE_LLM_MODEL=meta-llama/Meta-Llama-3-8B-Instruct
+bash scripts/runpod_api_setup.sh
+```
+
+No `HF_TOKEN`, no weight download, no GPU required on the pod.
+
 ## Already cloned?
 
 ```bash
