@@ -16,7 +16,7 @@ from aegis.core.policy import Policy
 from aegis.core.session import Session
 from aegis.execution.hf_runtime import ensure_hf_server, hf_model_id, start_server
 from aegis.execution.hf_workload import hf_llm
-from aegis.ifc.labels import INTERNAL, PUBLIC
+from aegis.ifc.labels import PUBLIC
 from aegis.tunnel.simulated_tunnel import SimulatedTunnel
 from aegis.utils.config import TunnelConfig
 from aegis.utils.visualization import console, print_layer_activation
@@ -80,7 +80,7 @@ def run_demo(*, query: str, backend: str, serve_only: bool) -> int:
         hf_llm,
         sandbox_backend=backend,
         tunnel=tunnel,
-        input_label=INTERNAL,
+        input_label=PUBLIC,
         output_clearance=PUBLIC,
     )
     tunnel.close()
@@ -92,6 +92,8 @@ def run_demo(*, query: str, backend: str, serve_only: bool) -> int:
     )
     console.print(f"  Sandbox ID : {result.sandbox_id}")
     console.print(f"  Audit valid: {engine.audit_log.verify_chain()}")
+    if result.blocked and result.reasons:
+        console.print(f"  [red]Blocked because:[/red] {'; '.join(result.reasons)}")
     if result.output:
         console.print(f"\n[bold]Model output:[/bold]\n{result.output}\n")
     return 0 if not result.blocked else 1

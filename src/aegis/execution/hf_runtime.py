@@ -26,7 +26,86 @@ def hf_model_id() -> str:
 
 def hf_token() -> str | None:
     raw = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN")
-    return raw.strip() if raw else None
+    if raw and raw.strip():
+        return raw.strip()
+    try:
+        from huggingface_hub import get_token
+
+        cached = get_token()
+        if cached:
+            return cached
+    except ImportError:
+        return None
+    return None
+
+
+def resolve_hf_token() -> str | None:
+    """Token from env vars or ~/.cache/huggingface/token."""
+    return hf_token()
+
+
+def verify_hf_auth(model_id: str | None = None) -> dict[str, Any]:
+    """Check token validity, HF username, and optional gated-model access."""
+    from huggingface_hub import HfApi
+    from huggingface_hub.utils import GatedRepoError, HfHubHTTPError
+
+    target = model_id or hf_model_id()
+    token = resolve_hf_token()
+    api = HfApi()
+    username: str | None = None
+
+    if token:
+        login_hf(persist=True)
+        try:
+            who = api.whoami(token=token)
+        except HfHubHTTPError as exc:
+            return {"ok": False, "error": f"HF token rejected: {exc}"}
+
+        username = str(who.get("name") or who.get("fullname") or "?")
+        expected = os.environ.get("HF_USERNAME")
+        if expected and expected.lstrip("@").lower() != username.lower():
+            return {
+                "ok": False,
+                "username": username,
+                "error": (
+                    f"HF_TOKEN belongs to @{username}, but HF_USERNAME=@{expected}. "
+                    "Use a token from the account that accepted the model license."
+                ),
+            }
+
+    try:
+        api.model_info(target, token=token)
+    except GatedRepoError:
+        if not token:
+            return {
+                "ok": False,
+                "error": (
+                    f"{target!r} is gated. Export HF_TOKEN=hf_... from the account "
+                    "that accepted the model license, then re-run."
+                ),
+            }
+        return {
+            "ok": False,
+            "username": username,
+            "error": (
+                f"@{username} cannot access gated model {target!r}. "
+                f"Open https://huggingface.co/{target} while logged in as "
+                f"@{username} and click 'Agree and access repository'."
+            ),
+        }
+    except HfHubHTTPError as exc:
+        if username:
+            return {
+                "ok": False,
+                "username": username,
+                "error": f"Cannot reach {target!r} as @{username}: {exc}",
+            }
+        return {"ok": False, "error": f"Cannot reach {target!r}: {exc}"}
+
+    result: dict[str, Any] = {"ok": True, "model": target}
+    if username:
+        result["username"] = username
+    return result
 
 
 def hf_server_url() -> str:
@@ -45,21 +124,24 @@ def _max_new_tokens() -> int:
 
 def _pretrained_kwargs() -> dict[str, Any]:
     kwargs: dict[str, Any] = {"trust_remote_code": True}
-    token = hf_token()
+    token = resolve_hf_token()
     if token:
         kwargs["token"] = token
     return kwargs
 
 
-def login_hf() -> None:
+def login_hf(*, persist: bool = False) -> None:
     """Authenticate with HF hub when a token is present."""
-    token = hf_token()
+    token = resolve_hf_token()
     if not token:
-        logger.info("No HF_TOKEN set — using public models only.")
+        logger.info("No HF token — public models only.")
         return
     from huggingface_hub import login
 
-    login(token=token, add_to_git_credential=False)
+    login(token=token, add_to_git_credential=persist)
+    if persist:
+        os.environ.setdefault("HF_TOKEN", token)
+        os.environ.setdefault("HUGGINGFACE_HUB_TOKEN", token)
 
 
 def load_model_bundle() -> dict[str, Any]:
@@ -67,13 +149,22 @@ def load_model_bundle() -> dict[str, Any]:
     if _model_bundle is not None:
         return _model_bundle
 
-    login_hf()
-    import torch
+    model_id = hf_model_id()
+    check = verify_hf_auth(model_id)
+    if not check.get("ok"):
+        msg = str(check.get("error", "HF auth failed"))
+        raise RuntimeError(msg)
+    username = check.get("username")
+    if username:
+        logger.info("HF authenticated as @%s", username)
+
+    login_hf(persist=True)
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-    model_id = hf_model_id()
     logger.info("Loading HF model: %s (4bit=%s)", model_id, _use_4bit())
     hub_kwargs = _pretrained_kwargs()
+
+    import torch
 
     tokenizer = AutoTokenizer.from_pretrained(model_id, **hub_kwargs)
     if tokenizer.pad_token is None:

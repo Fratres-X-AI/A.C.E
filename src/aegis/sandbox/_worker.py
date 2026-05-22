@@ -13,7 +13,10 @@ def _load_builtin_workloads() -> None:
     """Import modules that register named workloads for subprocess execution."""
     import importlib
 
-    for module_name in ("aegis.execution.mock_model",):
+    for module_name in (
+        "aegis.execution.mock_model",
+        "aegis.execution.hf_workload",
+    ):
         importlib.import_module(module_name)
 
 
