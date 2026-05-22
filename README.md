@@ -172,7 +172,7 @@ Default policy: [`policy.yaml`](policy.yaml)
 - MCP adapter is a secure RPC pattern, not full MCP server spec compliance
 - Cloudflare/Tailscale configs are templates requiring manual daemon deployment
 
-## DIU / Gov Compliance Notes
+## Compliance Notes
 
 - AGPLv3 license — source availability for audit
 - Exportable compliance artifacts via `ContainmentMetrics.export_compliance_artifact()`
