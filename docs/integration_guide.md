@@ -1,0 +1,154 @@
+# A.C.E Integration Guide
+
+## Ollama (Local)
+
+```python
+import requests
+from aegis.core.containment_engine import ContainmentEngine
+from aegis.core.session import Session
+from aegis.ifc.labels import PUBLIC
+
+engine = ContainmentEngine()
+session = Session()
+
+def ollama_model(payload: dict) -> str:
+    resp = requests.post(
+        "http://localhost:11434/api/generate",
+        json={"model": "llama3", "prompt": payload["query"], "stream": False},
+        timeout=120,
+    )
+    return resp.json()["response"]
+
+result = engine.process(
+    {"query": "Summarize public documentation"},
+    session,
+    ollama_model,
+    input_label=PUBLIC,
+    output_clearance=PUBLIC,
+)
+print(result.output)
+```
+
+## RunPod
+
+1. Deploy container with A.C.E installed (`pip install -e .`)
+2. Wrap RunPod handler with `InstrumentedRunner`
+3. Bind session to RunPod pod ID for audit correlation
+4. Export compliance artifacts to object storage after each batch
+
+```python
+from aegis.execution.instrumented_runner import InstrumentedRunner
+from aegis.audit.tamper_proof_log import TamperProofLog
+
+log = TamperProofLog()
+runner = InstrumentedRunner(audit_log=log)
+output = runner.run(your_handler, {"input": "..."})
+```
+
+## TEE Integration
+
+A.C.E ships first-class Intel TDX and AMD SEV-SNP adapters with auto-detection.
+
+### Quick start
+
+```python
+from aegis.execution.tee_factory import create_tee_environment, detect_platform
+from aegis.core.session import Session
+
+platform = detect_platform()  # intel-tdx | amd-sev-snp | simulated
+session = Session(tee=create_tee_environment(platform))
+quote = session.bind_tee("my-nonce")
+print(quote.tee_type, quote.hardware_backed, quote.measurement)
+```
+
+Run the demo:
+
+```bash
+python examples/tee_attestation_demo.py
+```
+
+### Platform detection order
+
+| Priority | Intel TDX | AMD SEV-SNP |
+|----------|-----------|-------------|
+| 1 | `/dev/tdx_guest` ioctl | `/dev/sev-guest` ioctl |
+| 2 | `INTEL_TDX_QUOTE_PATH` env | `AMD_SEV_SNP_QUOTE_PATH` env |
+| 3 | Azure IMDS `/attestation/TDX` | `/sys/firmware/sev-guest/id` sysfs |
+| 4 | `/sys/firmware/tdx_guest/status` | — |
+| 5 | Simulated fallback (dev) | Simulated fallback (dev) |
+
+Force a platform with `ACE_TEE_PLATFORM=intel-tdx|amd-sev-snp|simulated`.
+
+### Deploying on confidential VMs
+
+**Azure Confidential VM (TDX):** Attestation is fetched automatically via IMDS when running inside the guest. Set `ACE_DISABLE_AZURE_IMDS=1` to skip in air-gapped environments.
+
+**AMD SEV-SNP on Linux:** Ensure `sev-guest` module is loaded and `/dev/sev-guest` is accessible. Pre-export reports to a file and set `AMD_SEV_SNP_QUOTE_PATH=/run/aegis/guest.report` when using a sidecar attestation agent.
+
+**Intel TDX on Linux:** Requires `tdx-guest` driver (Linux 6.8+). Alternatively inject quotes via `INTEL_TDX_QUOTE_PATH`.
+
+### Production verification (next step)
+
+Replace `verify_attestation_stub()` with:
+
+| Platform | Verifier |
+|----------|----------|
+| Intel TDX | Intel DCAP QVL, Azure Attestation SDK |
+| AMD SEV-SNP | AMD KDS/VCEK chain via `sev-tool` |
+| Azure | `az attestation` policy validation |
+
+```python
+from aegis.execution.tee_abstraction import verify_attestation_stub
+
+# Stub today — swap for DCAP/KDS in production
+assert verify_attestation_stub(session.attestation)
+```
+
+### Legacy manual integration
+
+Implement the `TEEEnvironment` protocol for other platforms:
+
+| Platform | SDK | Notes |
+|----------|-----|-------|
+| NVIDIA CC | Confidential Computing | GPU memory encryption |
+| AWS Nitro | Nitro Enclaves | Enclave image hash |
+
+## DIU OT Artifact Export
+
+```python
+from aegis.audit.metrics import ContainmentMetrics
+
+metrics = ContainmentMetrics()
+# ... after benchmark run ...
+metrics.export_compliance_artifact("ot_submission_metrics.json")
+```
+
+Include tamper-proof log export:
+
+```python
+events = engine.audit_log.export_events(dp_epsilon=1.0)  # optional DP
+```
+
+## Policy-as-Code
+
+Create `policy.yaml`:
+
+```yaml
+policy:
+  default_sensitivity: INTERNAL
+  fail_closed: true
+  allow_declassification: false
+  guardian:
+    max_entropy_bits_per_char: 5.5
+    max_output_bytes_per_minute: 50000
+    canary_detection_enabled: true
+```
+
+Load at runtime:
+
+```python
+from aegis.core.policy import Policy
+from aegis.core.containment_engine import ContainmentEngine
+
+engine = ContainmentEngine(policy=Policy.from_file("policy.yaml"))
+```

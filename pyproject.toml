@@ -1,0 +1,137 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ace-aegis-containment"
+version = "0.1.0"
+description = "A.C.E — Aegis Containment Engine: auditable, layered AI containment framework"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.11"
+authors = [{ name = "Fratres X AI" }]
+keywords = ["ai-safety", "containment", "information-flow-control", "security"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Typing :: Typed",
+]
+dependencies = [
+    "cryptography>=42.0.0",
+    "numpy>=1.26.0",
+    "pydantic>=2.6.0",
+    "pyyaml>=6.0.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.8.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "types-PyYAML>=6.0.0",
+]
+crypto = ["cryptography>=42.0.0"]
+he = ["numpy>=1.26.0"]
+tee-sim = []
+math = ["sympy>=1.12.0"]
+all = ["ace-aegis-containment[dev,math]"]
+
+[project.urls]
+Homepage = "https://github.com/FratresMedAI/A.C.E"
+Documentation = "https://github.com/FratresMedAI/A.C.E#readme"
+Repository = "https://github.com/FratresMedAI/A.C.E"
+Issues = "https://github.com/FratresMedAI/A.C.E/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aegis"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+src = ["src", "tests", "examples", "scripts"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D203",
+    "D213",
+    "COM812",
+    "ISC001",
+    "S101",
+    "PLR0913",
+    "PLR2004",
+    "PLR0912",
+    "TRY003",
+    "EM101",
+    "EM102",
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D107",
+    "D401",
+    "TC001",
+    "TC003",
+    "C901",
+    "ARG001",
+    "ARG005",
+    "ANN401",
+    "PLC0415",
+    "PERF401",
+    "RET504",
+    "FBT003",
+    "PTH110",
+    "TC002",
+    "S311",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "PLR2004", "S101", "D103", "D100", "D104", "S105"]
+"examples/**/*.py" = ["T201", "INP001", "D103"]
+"scripts/**/*.py" = ["T201", "D103"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+mypy_path = "src"
+packages = ["aegis"]
+
+[[tool.mypy.overrides]]
+module = ["sympy.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["aegis"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+include = [
+    "src/aegis/core/*",
+    "src/aegis/ifc/*",
+    "src/aegis/guardians/*",
+    "src/aegis/audit/*",
+    "src/aegis/crypto/*",
+]
