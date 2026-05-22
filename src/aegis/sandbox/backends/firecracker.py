@@ -157,7 +157,11 @@ class FirecrackerSandbox(SandboxBackend):
             + f"Content-Length: {len(body)}\r\n\r\n".encode()
             + body
         )
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:  # type: ignore[attr-defined]
+        af_unix = getattr(socket, "AF_UNIX", None)
+        if af_unix is None:
+            msg = "Firecracker requires Unix domain sockets (Linux only)"
+            raise SandboxBackendError(msg)
+        with socket.socket(af_unix, socket.SOCK_STREAM) as sock:
             sock.connect(str(socket_path))
             sock.sendall(request)
             data = sock.recv(4096)
