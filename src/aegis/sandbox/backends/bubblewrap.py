@@ -108,7 +108,7 @@ class BubblewrapSandbox(SandboxBackend):
 
     def _bwrap_base(self) -> list[str]:
         cmd = [_BWRAP]
-        # RunPod pods are nested containers — user namespaces often fail (read-only sysctl).
+        # Nested containers (RunPod): skip userns — sysctl is often read-only.
         if not _running_in_container():
             cmd.append("--unshare-user")
         cmd.extend(
