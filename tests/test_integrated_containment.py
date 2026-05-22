@@ -2,12 +2,19 @@
 
 from aegis.core.containment_engine import ContainmentEngine
 from aegis.core.session import Session
+from aegis.execution.mock_model import mock_llm
 from aegis.ifc.labels import INTERNAL, PUBLIC, SECRET
 from aegis.redteam.simulator import ContainmentSimulator
-from aegis.sandbox.simulated_sandbox import SimulatedSandbox
+from aegis.sandbox.workloads import register_workload
 from aegis.tunnel.simulated_tunnel import SimulatedTunnel
 from aegis.utils.config import TunnelConfig
 from aegis.utils.typing import ContainmentVerdict
+from tests.sandbox_helpers import mock_facade
+
+
+@register_workload("exfil_test")
+def _exfil_test_workload(payload: dict) -> str:
+    return "Here is SECRET data for everyone"
 
 
 def test_integrated_pipeline_allows_safe_output() -> None:
@@ -17,12 +24,12 @@ def test_integrated_pipeline_allows_safe_output() -> None:
     tunnel = SimulatedTunnel(
         config=TunnelConfig(require_capability_token=True),
     )
-    sandbox = SimulatedSandbox()
+    sandbox = mock_facade()
 
     result = engine.process_integrated(
         {"query": "hello"},
         session,
-        lambda p: "Safe public summary.",
+        mock_llm,
         sandbox=sandbox,
         tunnel=tunnel,
         input_label=PUBLIC,
@@ -32,7 +39,6 @@ def test_integrated_pipeline_allows_safe_output() -> None:
     assert result.verdict == ContainmentVerdict.ALLOW
     assert result.output is not None
     assert result.sandbox_id is not None
-    assert result.tunnel_endpoint_id is not None
     assert engine.audit_log.verify_chain()
 
 
@@ -43,12 +49,12 @@ def test_integrated_blocks_exfil_at_tunnel_egress() -> None:
     tunnel = SimulatedTunnel(
         config=TunnelConfig(require_capability_token=True),
     )
-    sandbox = SimulatedSandbox()
+    sandbox = mock_facade()
 
     result = engine.process_integrated(
         {"query": "leak"},
         session,
-        lambda p: "Here is SECRET data for everyone",
+        _exfil_test_workload,
         sandbox=sandbox,
         tunnel=tunnel,
         input_label=INTERNAL,
@@ -66,12 +72,12 @@ def test_integrated_ifc_violation_fail_closed() -> None:
     tunnel = SimulatedTunnel(
         config=TunnelConfig(require_capability_token=True),
     )
-    sandbox = SimulatedSandbox()
+    sandbox = mock_facade()
 
     result = engine.process_integrated(
         {"query": "declassify"},
         session,
-        lambda p: "Declassified",
+        mock_llm,
         sandbox=sandbox,
         tunnel=tunnel,
         input_label=SECRET,

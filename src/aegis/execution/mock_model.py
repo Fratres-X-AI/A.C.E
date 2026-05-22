@@ -6,7 +6,10 @@ import hashlib
 import secrets
 from typing import Any
 
+from aegis.sandbox.workloads import register_workload
 
+
+@register_workload("mock_llm")
 def mock_llm(payload: dict[str, Any]) -> str:
     """Deterministic fake LLM for local demos on low-spec hardware."""
     query = str(payload.get("query", "")).lower()

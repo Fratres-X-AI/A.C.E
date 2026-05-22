@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ace-aegis-containment"
-version = "0.2.0"
+version = "0.3.0"
 description = "A.C.E — Aegis Containment Engine: auditable, layered AI containment framework"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -97,10 +97,15 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["ANN", "PLR2004", "S101", "D103", "D100", "D104", "S105"]
+"tests/**/*.py" = ["ANN", "PLR2004", "S101", "D103", "D100", "D104", "S105", "S310"]
 "examples/**/*.py" = ["T201", "INP001", "D103", "EXE001"]
 "scripts/**/*.py" = ["T201", "D103", "EXE001"]
-"src/aegis/sandbox/docker_sandbox.py" = ["S603", "S607", "TRY300"]
+"src/aegis/sandbox/backends/docker.py" = ["S603", "S607", "TRY300"]
+"src/aegis/sandbox/backends/_subprocess.py" = ["S603", "S607", "TRY300"]
+"src/aegis/sandbox/backends/bubblewrap.py" = ["S603", "S607", "S108"]
+"src/aegis/sandbox/backends/gvisor.py" = ["S603", "S607"]
+"src/aegis/sandbox/backends/firecracker.py" = ["S603", "S607", "S404"]
+"src/aegis/redteam/simulator.py" = ["PLR0915"]
 
 [tool.mypy]
 python_version = "3.11"

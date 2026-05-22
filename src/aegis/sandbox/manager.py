@@ -1,68 +1,44 @@
-"""Sandbox factory — auto-detect runtime and manage lifecycle."""
+"""Sandbox factory — registry-driven backend selection."""
 
 from __future__ import annotations
 
-from aegis.sandbox.docker_sandbox import DockerSandbox, docker_available
-from aegis.sandbox.environment import SandboxEnvironment
-from aegis.sandbox.simulated_sandbox import SimulatedSandbox
+import os
+
+from aegis.audit.tamper_proof_log import TamperProofLog
+from aegis.ifc.labels import SecurityLabel
+from aegis.sandbox.base import SandboxBackend
+from aegis.sandbox.facade import SandboxSessionFacade
+from aegis.sandbox.registry import SandboxRegistry
 from aegis.utils.config import SandboxConfig
 
 
-class GVisorRuntime:
-    """Extension hook for gVisor runsc runtime (stub)."""
-
-    @staticmethod
-    def is_available() -> bool:
-        return False
-
-    @staticmethod
-    def reason() -> str:
-        return "gVisor runsc not configured — set runtime=docker with --runtime=runsc"
-
-
-class FirecrackerRuntime:
-    """Extension hook for Firecracker microVMs (stub)."""
-
-    @staticmethod
-    def is_available() -> bool:
-        return False
-
-    @staticmethod
-    def reason() -> str:
-        return "Firecracker not configured — requires firecracker binary + kernel image"
-
-
-class KataRuntime:
-    """Extension hook for Kata Containers (stub)."""
-
-    @staticmethod
-    def is_available() -> bool:
-        return False
-
-    @staticmethod
-    def reason() -> str:
-        return "Kata Containers not configured — requires containerd + kata-runtime"
-
-
 class SandboxManager:
-    """Create sandboxes with auto-detected or explicit runtime."""
+    """Create sandbox sessions using pluggable isolation backends."""
 
-    def __init__(self, config: SandboxConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: SandboxConfig | None = None,
+        audit_log: TamperProofLog | None = None,
+    ) -> None:
         self.config = config or SandboxConfig()
+        self.audit_log = audit_log
 
-    def create_sandbox(self) -> SandboxEnvironment:
-        runtime = self.config.runtime.lower()
-        if runtime == "simulated":
-            return SimulatedSandbox(config=self.config)
-        if runtime == "docker":
-            return DockerSandbox(config=self.config)
-        if runtime == "gvisor":
-            if GVisorRuntime.is_available():
-                return DockerSandbox(config=self.config)
-            msg = GVisorRuntime.reason()
-            raise RuntimeError(msg)
-        if runtime == "auto":
-            if docker_available():
-                return DockerSandbox(config=self.config)
-            return SimulatedSandbox(config=self.config)
-        return SimulatedSandbox(config=self.config)
+    def get_backend(self, name: str | None = None) -> SandboxBackend:
+        if name is not None:
+            return SandboxRegistry.get(name, self.config)
+        env_name = os.environ.get("ACE_SANDBOX_BACKEND")
+        if env_name:
+            return SandboxRegistry.get(env_name, self.config)
+        return SandboxRegistry.resolve(self.config)
+
+    def open_session(self, _label: SecurityLabel | None = None) -> SandboxSessionFacade:
+        backend = self.get_backend()
+        return SandboxSessionFacade(
+            backend=backend,
+            config=self.config,
+            audit_log=self.audit_log,
+        )
+
+    def create_sandbox(self) -> SandboxSessionFacade:
+        """Backward-compatible alias — returns facade without starting workload."""
+        return self.open_session()

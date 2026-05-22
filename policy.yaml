@@ -11,7 +11,7 @@ policy:
     canary_detection_enabled: true
     anomaly_z_threshold: 2.5
   sandbox:
-    runtime: auto
+    backend: auto
     memory_mb: 512
     cpu_quota: 50000
     network_enabled: false

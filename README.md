@@ -64,9 +64,10 @@ python examples/secure_agent_demo.py
 python examples/math_physics_advisor_demo.py
 python examples/containment_benchmark.py
 python examples/local_mock_agent_demo.py
+python examples/sandbox_backend_demo.py --backend auto
 python examples/integrated_sandbox_tunnel_demo.py
 python examples/sandbox_exfil_demo.py
-python examples/label_propagation_demo.py
+python examples/sandbox_backend_demo.py
 python scripts/export_compliance_pack.py
 
 # Test suite
@@ -92,8 +93,37 @@ mypy src/aegis
 | Tamper-Proof Log | `audit/tamper_proof_log` | Hash-chained append-only audit trail |
 | Metrics | `audit/metrics` | Containment effectiveness score, compliance export |
 | Red-Team Simulator | `redteam/simulator` | Self-auditing stress tests |
-| Sandbox Runtime | `sandbox/` | Docker + simulated isolation with label binding |
+| Sandbox Runtime | `sandbox/` | Pluggable: bubblewrap, gVisor, Firecracker, Docker |
 | Tunnel Gateway | `tunnel/` | Policy-controlled ingress/egress with MCP adapter |
+
+## Sandbox Backends
+
+A.C.E uses a **registry-driven sandbox layer** with real isolation only — no simulated/in-process mode. Backends declare supported `platforms`; the registry auto-selects based on OS.
+
+### Platform Support
+
+| Platform | Primary backend | Auto-resolve order |
+|----------|-----------------|-------------------|
+| **Linux** | bubblewrap | `bubblewrap` → `gvisor` → `firecracker` → `docker` |
+| **Windows / macOS** | Docker (fallback) | `docker` |
+
+| Backend | Use case | Availability |
+|---------|----------|--------------|
+| **bubblewrap** | Low-overhead Linux namespaces + seccomp | `bwrap` on PATH, Linux only |
+| **gvisor** | Stronger syscall isolation via runsc | `runsc` on PATH, Linux only |
+| **firecracker** | microVM isolation (RunPod/server) | `ACE_FC_KERNEL` + `ACE_FC_ROOTFS`, Linux only |
+| **docker** | Cross-platform fallback | Docker daemon; **heavy on Windows** |
+
+Configure via [`policy.yaml`](policy.yaml) `sandbox.backend` or `ACE_SANDBOX_BACKEND`.
+
+Callable workloads must be registered with `@register_workload("name")` before running inside an isolated sandbox (see `aegis.sandbox.workloads`).
+
+```bash
+python examples/sandbox_backend_demo.py --backend auto
+python examples/sandbox_backend_demo.py --loop-available
+```
+
+**Docker on Windows/macOS:** Docker is the auto-resolve fallback when Linux-native runtimes are unavailable. Docker Desktop is resource-heavy on Windows.
 
 ## Trade-offs
 
@@ -105,8 +135,8 @@ mypy src/aegis
 | IFC enforcement | Blocks illegal label flows | O(steps) per request |
 | Tamper-proof log | Full audit reconstructability | O(1) append, O(n) verify |
 | Fail-closed policy | No silent bypass on ambiguity | May block edge cases |
-| Docker sandbox | Real kernel isolation | Container startup overhead |
-| Simulated sandbox | Zero deps, CI-friendly | No kernel isolation |
+| Bubblewrap sandbox | Real isolation, minimal overhead | Linux only |
+| Docker sandbox | Real isolation, portable fallback | Heavy on Windows (Docker Desktop) |
 | Tunnel policy gate | Zero-trust boundary control | Per-request validation latency |
 
 ## Local-Only Workflow (no Ollama / no cloud)
@@ -128,9 +158,10 @@ Default policy: [`policy.yaml`](policy.yaml)
 4. **Policy-as-code**: Load YAML from `Policy.from_file("policy.yaml")`
 5. **Ollama/RunPod**: Wrap inference in `InstrumentedRunner` or `process_integrated()` (see `docs/integration_guide.md`)
 
-## Known Limitations (v0.2.0)
+## Known Limitations (v0.3.0)
 
-- Simulated sandbox is not kernel isolation; use Docker on RunPod for real boundaries
+- Linux backends (bubblewrap, gVisor, Firecracker) are incompatible on Windows by design
+- Docker Desktop on Windows/macOS is the fallback — heavier than Linux-native runtimes
 - MCP adapter is a secure RPC pattern, not full MCP server spec compliance
 - Cloudflare/Tailscale configs are templates requiring manual daemon deployment
 

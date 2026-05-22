@@ -17,7 +17,9 @@ from aegis.guardians.output_guardian import OutputGuardian
 from aegis.guardians.verification import VerificationEngine
 from aegis.ifc.flow_control import FlowControlEngine, FlowViolationError
 from aegis.ifc.labels import SecurityLabel
+from aegis.sandbox.base import SandboxBackend, SandboxBackendError
 from aegis.sandbox.environment import SandboxEnvironment
+from aegis.sandbox.manager import SandboxManager
 from aegis.tunnel.gateway import TunnelGateway
 from aegis.tunnel.policy_endpoint import TunnelPolicyError
 from aegis.utils.typing import (
@@ -110,7 +112,8 @@ class ContainmentEngine:
         session: Session,
         workload_fn: Callable[[dict[str, Any]], str],
         *,
-        sandbox: SandboxEnvironment,
+        sandbox: SandboxEnvironment | None = None,
+        sandbox_backend: str | SandboxBackend | None = None,
         tunnel: TunnelGateway,
         input_label: SecurityLabel,
         output_clearance: SecurityLabel,
@@ -148,7 +151,13 @@ class ContainmentEngine:
             AuditEvent(layer="tunnel", action="endpoint_open", detail=endpoint_url),
         )
 
-        sandbox_info = sandbox.create(input_label)
+        active_sandbox = sandbox or self._resolve_sandbox(
+            session,
+            input_label,
+            sandbox_backend,
+        )
+
+        sandbox_info = active_sandbox.create(input_label)
         session.sandbox_id = sandbox_info.sandbox_id
         session.sandbox_label = input_label
         self.audit_log.append(
@@ -164,7 +173,7 @@ class ContainmentEngine:
             self.guardian.register_canary(token)
 
         raw_output, workload_block = self._run_sandbox_workload(
-            sandbox,
+            active_sandbox,
             workload_fn,
             payload,
             input_label,
@@ -186,7 +195,7 @@ class ContainmentEngine:
             reasons=reasons,
         )
 
-        sandbox.destroy()
+        active_sandbox.destroy()
         self.audit_log.append(
             AuditEvent(
                 layer="core",
@@ -276,13 +285,47 @@ class ContainmentEngine:
             self.audit_log.append(
                 AuditEvent(layer="sandbox", action="workload_complete", detail="ok"),
             )
-        except (PermissionError, MemoryError) as exc:
+        except (PermissionError, MemoryError, SandboxBackendError) as exc:
             self.audit_log.append(
                 AuditEvent(layer="sandbox", action="workload_denied", detail=str(exc)),
             )
             sandbox.destroy()
             return "", self._blocked_result([str(exc)])
         return raw_output, None
+
+    def _resolve_sandbox(
+        self,
+        session: Session,
+        _label: SecurityLabel,
+        sandbox_backend: str | SandboxBackend | None,
+    ) -> SandboxEnvironment:
+        if isinstance(sandbox_backend, SandboxBackend):
+            from aegis.sandbox.facade import SandboxSessionFacade
+
+            return SandboxSessionFacade(
+                backend=sandbox_backend,
+                config=self.policy.sandbox_config(),
+                audit_log=self.audit_log,
+            )
+        backend_name = (
+            sandbox_backend
+            or session.sandbox_backend
+            or self.policy.sandbox_config().resolved_backend()
+        )
+        manager = SandboxManager(
+            config=self.policy.sandbox_config(),
+            audit_log=self.audit_log,
+        )
+        if backend_name and backend_name != "auto":
+            backend = manager.get_backend(str(backend_name))
+            from aegis.sandbox.facade import SandboxSessionFacade
+
+            return SandboxSessionFacade(
+                backend=backend,
+                config=manager.config,
+                audit_log=self.audit_log,
+            )
+        return manager.open_session()
 
     def _finalize_egress(
         self,

@@ -9,7 +9,7 @@ from aegis.core.containment_engine import ContainmentEngine
 from aegis.core.policy import Policy
 from aegis.core.session import Session
 from aegis.execution.mock_model import mock_llm
-from aegis.ifc.labels import INTERNAL, PUBLIC
+from aegis.ifc.labels import PUBLIC
 from aegis.sandbox.manager import SandboxManager
 from aegis.tunnel.simulated_tunnel import SimulatedTunnel
 from aegis.utils.visualization import (
@@ -30,20 +30,19 @@ def main() -> None:
     session.bind_tee("integrated-demo")
     session.issue_capability("inference")
 
-    sandbox = SandboxManager(policy.policy.sandbox).create_sandbox()
+    session.sandbox_backend = "auto"
+    manager = SandboxManager(policy.policy.sandbox, audit_log=engine.audit_log)
+    sandbox = manager.open_session()
     tunnel = SimulatedTunnel(config=policy.policy.tunnel)
     runtime = sandbox.runtime_name
 
-    print_layer_activation("Sandbox", "PASS", f"runtime={runtime}")
+    print_layer_activation("Sandbox", "PASS", f"backend={runtime}")
     print_layer_activation("Tunnel", "PASS", f"endpoint={tunnel.endpoint_id}")
-
-    def workload(payload: dict) -> str:
-        return mock_llm({"query": payload.get("query", ""), "mode": "safe"})
 
     result = engine.process_integrated(
         {"query": "summarize quarterly report"},
         session,
-        workload,
+        mock_llm,
         sandbox=sandbox,
         tunnel=tunnel,
         input_label=PUBLIC,

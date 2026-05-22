@@ -18,11 +18,18 @@ class GuardianConfig(BaseModel):
 class SandboxConfig(BaseModel):
     """Self-hosted sandbox runtime configuration."""
 
-    runtime: str = "auto"
+    backend: str = "auto"
+    runtime: str | None = None  # deprecated alias for backend
     memory_mb: int = Field(default=512, ge=64)
     cpu_quota: int = Field(default=50_000, ge=1000)
     network_enabled: bool = False
     seccomp_profile: str = "default"
+
+    def resolved_backend(self) -> str:
+        """Return effective backend name, honoring deprecated runtime alias."""
+        if self.runtime is not None:
+            return self.runtime
+        return self.backend
 
 
 class TunnelConfig(BaseModel):

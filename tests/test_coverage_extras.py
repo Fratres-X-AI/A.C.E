@@ -18,10 +18,9 @@ from aegis.guardians.verification import VerificationEngine
 from aegis.ifc.flow_control import FlowControlEngine
 from aegis.ifc.labels import INTERNAL, PUBLIC, SECRET
 from aegis.redteam.canary import CanaryManager
-from aegis.sandbox.docker_sandbox import DockerSandbox
 from aegis.sandbox.manager import SandboxManager
-from aegis.sandbox.simulated_sandbox import SimulatedSandbox
-from aegis.utils.config import SandboxConfig
+from aegis.tunnel.simulated_tunnel import SimulatedTunnel
+from aegis.utils.config import SandboxConfig, TunnelConfig
 from aegis.utils.typing import ContainmentVerdict
 
 
@@ -104,27 +103,89 @@ def test_flow_effective_output_label() -> None:
 
 def test_policy_sandbox_tunnel_accessors() -> None:
     policy = Policy()
-    assert policy.sandbox_config().runtime == "auto"
+    assert policy.sandbox_config().resolved_backend() == "auto"
     assert "/inference" in policy.tunnel_allowed_routes()
 
 
-def test_docker_sandbox_inspect_not_created() -> None:
-    sb = DockerSandbox()
-    assert sb.inspect()["status"] == "not_created"
+def test_mock_backend_inspect() -> None:
+    from aegis.sandbox.base import SandboxBackendError
+    from tests.sandbox_helpers import MockSandboxBackend
+
+    backend = MockSandboxBackend()
+    with pytest.raises(SandboxBackendError):
+        backend.inspect("nonexistent")
 
 
-def test_sandbox_manager_simulated_runtime() -> None:
-    manager = SandboxManager(SandboxConfig(runtime="simulated"))
-    assert manager.create_sandbox().runtime_name == "simulated"
+def test_sandbox_manager_mock_backend() -> None:
+    manager = SandboxManager(SandboxConfig(backend="mock"))
+    facade = manager.create_sandbox()
+    assert facade.runtime_name == "mock"
 
 
-def test_simulated_sandbox_exec_and_network() -> None:
-    sandbox = SimulatedSandbox()
-    sandbox.create(INTERNAL)
-    assert "simulated-exec" in sandbox.exec(["echo", "hi"])
-    with pytest.raises(PermissionError):
-        sandbox.run_labeled(lambda p: "x", {"requires_network": True}, INTERNAL)
-    sandbox.destroy()
+def test_mock_facade_echo_workload() -> None:
+    from aegis.execution.mock_model import mock_llm
+    from tests.sandbox_helpers import mock_facade
+
+    facade = mock_facade()
+    facade.create(INTERNAL)
+    output = facade.run_labeled(mock_llm, {"query": "test"}, INTERNAL)
+    assert output
+    facade.destroy()
+
+
+def test_compliance_export_pack(tmp_path: object) -> None:
+    from pathlib import Path
+
+    from aegis.audit.compliance_export import export_compliance_pack
+    from aegis.audit.tamper_proof_log import TamperProofLog
+    from aegis.redteam.simulator import ContainmentReport
+
+    out = Path(str(tmp_path)) / "pack"
+    audit = TamperProofLog()
+    audit.append(
+        __import__("aegis.utils.typing", fromlist=["AuditEvent"]).AuditEvent(
+            layer="test",
+            action="x",
+            detail="y",
+        ),
+    )
+    manifest = export_compliance_pack(
+        out,
+        audit_log=audit,
+        benchmark=ContainmentReport(
+            scenarios_run=0,
+            scenarios_caught=0,
+            catch_rate=1.0,
+            results=[],
+        ),
+        policy_path=Path(__file__).resolve().parent.parent / "policy.yaml",
+    )
+    assert "files" in manifest
+    assert (out / "manifest.json").exists()
+
+
+def test_simulated_tunnel_http_handler() -> None:
+    import time
+    import urllib.error
+    import urllib.request
+
+    cfg = TunnelConfig(require_capability_token=False, allowed_routes=["/health"])
+    tunnel = SimulatedTunnel(config=cfg)
+    session = Session()
+    url = tunnel.open_endpoint(session)
+    time.sleep(0.3)
+    req = urllib.request.Request(f"{url}/health", method="GET")
+    req.add_header("X-Session-ID", session.session_id)
+    req.add_header("X-Label", "INTERNAL")
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        body = resp.read().decode()
+    assert "status" in body
+
+    bad_req = urllib.request.Request(f"{url}/denied", method="POST", data=b"{}")
+    bad_req.add_header("Content-Type", "application/json")
+    with pytest.raises(urllib.error.HTTPError):
+        urllib.request.urlopen(bad_req, timeout=5)
+    tunnel.close()
 
 
 def test_capability_token() -> None:

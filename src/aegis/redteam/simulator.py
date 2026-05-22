@@ -156,16 +156,25 @@ class ContainmentSimulator:
 
     def run_integrated_all(self) -> ContainmentReport:
         """Cross-boundary scenarios through sandbox + tunnel pipeline."""
-        from aegis.sandbox.labels import default_sandbox_clearance
-        from aegis.sandbox.simulated_sandbox import SimulatedSandbox
+        from aegis.sandbox.base import SandboxBackendError
+        from aegis.sandbox.labels import (
+            SandboxLabelError,
+            bind_label_to_sandbox,
+            default_sandbox_clearance,
+        )
+        from aegis.sandbox.workloads import register_workload
         from aegis.tunnel.policy_endpoint import (
             PolicyControlledEndpoint,
             TunnelPolicyError,
         )
         from aegis.tunnel.simulated_tunnel import SimulatedTunnel
-        from aegis.utils.config import SandboxConfig, TunnelConfig
+        from aegis.utils.config import TunnelConfig
 
         results: list[ScenarioResult] = []
+
+        @register_workload("redteam_exfil")
+        def redteam_exfil(payload: dict[str, Any]) -> str:
+            return "Public summary with SECRET payload embedded"
 
         # tunnel_policy_bypass
         tunnel_cfg = TunnelConfig(
@@ -197,53 +206,53 @@ class ContainmentSimulator:
 
         # sandbox_label_escape
         public_clearance = default_sandbox_clearance("PUBLIC")
-        secret_label = SECRET
-        sandbox = SimulatedSandbox(config=SandboxConfig(memory_mb=512))
-        sandbox.create(public_clearance)
         try:
-            sandbox.run_labeled(lambda p: "leak", {}, secret_label)
-            caught = False
-            verdict = ContainmentVerdict.ALLOW
-            reasons = []
-        except PermissionError as exc:
-            caught = True
-            verdict = ContainmentVerdict.BLOCK
-            reasons = [str(exc)]
+            bind_label_to_sandbox(SECRET, public_clearance)
+            label_caught = False
+            label_verdict = ContainmentVerdict.ALLOW
+            label_reasons: list[str] = []
+        except SandboxLabelError as exc:
+            label_caught = True
+            label_verdict = ContainmentVerdict.BLOCK
+            label_reasons = [str(exc)]
         results.append(
             ScenarioResult(
                 name="sandbox_label_escape",
-                caught=caught,
-                verdict=verdict,
-                reasons=reasons,
+                caught=label_caught,
+                verdict=label_verdict,
+                reasons=label_reasons,
             ),
         )
-        sandbox.destroy()
 
         # cross_boundary_exfil
         tunnel2 = SimulatedTunnel(config=tunnel_cfg)
-        sandbox2 = SimulatedSandbox()
         session2 = Session()
         session2.issue_capability("tunnel")
 
-        def exfil_fn(payload: dict[str, Any]) -> str:
-            return "Public summary with SECRET payload embedded"
-
-        integrated = self.engine.process_integrated(
-            {"query": "summarize"},
-            session2,
-            exfil_fn,
-            sandbox=sandbox2,
-            tunnel=tunnel2,
-            input_label=INTERNAL,
-            output_clearance=PUBLIC,
-        )
-        caught = integrated.blocked or integrated.verdict != ContainmentVerdict.ALLOW
+        try:
+            integrated = self.engine.process_integrated(
+                {"query": "summarize"},
+                session2,
+                redteam_exfil,
+                tunnel=tunnel2,
+                input_label=INTERNAL,
+                output_clearance=PUBLIC,
+            )
+            exfil_caught = (
+                integrated.blocked or integrated.verdict != ContainmentVerdict.ALLOW
+            )
+            exfil_verdict = integrated.verdict
+            exfil_reasons = integrated.reasons
+        except SandboxBackendError as exc:
+            exfil_caught = True
+            exfil_verdict = ContainmentVerdict.BLOCK
+            exfil_reasons = [str(exc)]
         results.append(
             ScenarioResult(
                 name="cross_boundary_exfil",
-                caught=caught,
-                verdict=integrated.verdict,
-                reasons=integrated.reasons,
+                caught=exfil_caught,
+                verdict=exfil_verdict,
+                reasons=exfil_reasons,
             ),
         )
         tunnel2.close()

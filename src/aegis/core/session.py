@@ -47,6 +47,7 @@ class Session:
     sandbox_id: str | None = None
     tunnel_endpoint_id: str | None = None
     sandbox_label: SecurityLabel | None = None
+    sandbox_backend: str | None = None
 
     def bind_tee(self, nonce: str | None = None) -> AttestationQuote:
         self.attestation = self.tee.attest(nonce)
