@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import sys
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -56,11 +55,7 @@ class SandboxSessionFacade:
                 "before running in an isolated sandbox backend."
             )
             raise SandboxBackendError(msg)
-        command = [
-            sys.executable,
-            "-m",
-            "aegis.sandbox._worker",
-        ]
+        command = self.backend.worker_command()
         payload_json = json.dumps(payload)
         output = self.backend.run(
             self._sandbox_id,

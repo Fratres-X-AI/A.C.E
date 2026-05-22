@@ -123,7 +123,14 @@ python examples/sandbox_backend_demo.py --backend auto
 python examples/sandbox_backend_demo.py --loop-available
 ```
 
-**Docker on Windows/macOS:** Docker is the auto-resolve fallback when Linux-native runtimes are unavailable. Docker Desktop is resource-heavy on Windows.
+**Docker on Windows/macOS:** Docker is the auto-resolve fallback when Linux-native runtimes are unavailable. Build the sandbox image first:
+
+```bash
+docker build -f Dockerfile.sandbox -t ace-aegis-sandbox:local .
+python examples/runpod_smoke.py --backend docker
+```
+
+See [`docs/runpod_quickstart.md`](docs/runpod_quickstart.md) for RunPod one-liners.
 
 ## Trade-offs
 

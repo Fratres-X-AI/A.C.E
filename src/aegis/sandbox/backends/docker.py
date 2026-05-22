@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from typing import Any
 
@@ -13,6 +14,8 @@ from aegis.sandbox.backends._subprocess import (
 from aegis.sandbox.base import SandboxBackend, SandboxBackendError, SandboxCreateConfig
 from aegis.sandbox.environment import SandboxInfo
 
+_DEFAULT_IMAGE = "ace-aegis-sandbox:local"
+
 
 class DockerSandbox(SandboxBackend):
     """Docker container isolation — fallback when lightweight runtimes unavailable."""
@@ -20,14 +23,17 @@ class DockerSandbox(SandboxBackend):
     name = "docker"
     recommended_for_local = False
     platforms = frozenset({"linux", "win32", "darwin"})
-    image: str = "python:3.12-slim"
 
     def __init__(self, config: Any = None) -> None:
         super().__init__(config)
         self._container_ids: dict[str, str] = {}
+        self.image = os.environ.get("ACE_DOCKER_IMAGE", _DEFAULT_IMAGE)
 
     def is_available(self) -> bool:
         return docker_available()
+
+    def worker_command(self) -> list[str]:
+        return ["python3", "-m", "aegis.sandbox._worker"]
 
     def create(self, create_config: SandboxCreateConfig) -> SandboxInfo:
         info = SandboxInfo(

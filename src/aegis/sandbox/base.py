@@ -93,6 +93,12 @@ class SandboxBackend(ABC):
         if self.supports_labels:
             bind_label_to_sandbox(workload_label, state.info.label)
 
+    def worker_command(self) -> list[str]:
+        """Command to invoke the in-sandbox worker module."""
+        import sys
+
+        return [sys.executable, "-m", "aegis.sandbox._worker"]
+
     def _require_state(self, sandbox_id: str) -> SandboxInstanceState:
         state = self._instances.get(sandbox_id)
         if state is None:
