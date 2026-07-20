@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/FratresMedAI/A.C.E/actions/workflows/ci.yml"><img src="https://github.com/FratresMedAI/A.C.E/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Fratres-X-AI/A.C.E/actions/workflows/ci.yml"><img src="https://github.com/Fratres-X-AI/A.C.E/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/maturity-prototype-0ea5e9" alt="Maturity: prototype" />
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-3776AB" alt="Python" />
   <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" />
@@ -82,7 +82,7 @@ flowchart TB
 ## Quickstart
 
 ```bash
-git clone https://github.com/FratresMedAI/A.C.E.git
+git clone https://github.com/Fratres-X-AI/A.C.E.git
 cd A.C.E
 python -m venv .venv
 
@@ -212,4 +212,4 @@ Defense stays defensive. No offensive capability generation.
 
 A.C.E is part of the Fratres X AI lab — reviewable AI, autonomy, and defensive technology prototypes with physics-first modeling and honest maturity labels.
 
-**Site:** [fratres-x.com](https://www.fratres-x.com) · **Org:** [FratresMedAI](https://github.com/FratresMedAI)
+**Site:** [fratres-x.com](https://www.fratres-x.com) · **Org:** [Fratres-X-AI](https://github.com/Fratres-X-AI)

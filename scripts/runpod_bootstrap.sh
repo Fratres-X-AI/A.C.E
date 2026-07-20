@@ -2,7 +2,7 @@
 # Paste this on a fresh RunPod Linux pod — clones A.C.E and runs the smoke test.
 set -euo pipefail
 
-REPO_URL="${ACE_REPO:-https://github.com/FratresMedAI/A.C.E.git}"
+REPO_URL="${ACE_REPO:-https://github.com/Fratres-X-AI/A.C.E.git}"
 INSTALL_DIR="${ACE_DIR:-$HOME/A.C.E}"
 
 echo "[ace] Bootstrap RunPod test"

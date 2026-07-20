@@ -4,5 +4,5 @@ contact_links:
     url: https://www.fratres-x.com
     about: Project home, consulting, and meeting requests
   - name: Security vulnerability
-    url: https://github.com/FratresMedAI/A.C.E/security/advisories/new
+    url: https://github.com/Fratres-X-AI/A.C.E/security/advisories/new
     about: Private reporting for containment bypasses (do not file a public issue)

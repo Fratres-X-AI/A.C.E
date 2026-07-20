@@ -12,7 +12,7 @@ A.C.E is **defensive** containment software from [Fratres X AI](https://www.frat
 ## Reporting a vulnerability
 
 1. **Do not** open a public GitHub issue for sensitive containment bypasses.
-2. Use [GitHub private vulnerability reporting](https://github.com/FratresMedAI/A.C.E/security/advisories/new) on `FratresMedAI/A.C.E`, or contact Fratres X AI via [fratres-x.com](https://www.fratres-x.com).
+2. Use [GitHub private vulnerability reporting](https://github.com/Fratres-X-AI/A.C.E/security/advisories/new) on `Fratres-X-AI/A.C.E`, or contact Fratres X AI via [fratres-x.com](https://www.fratres-x.com).
 3. Include: reproduction steps, affected module (e.g. `guardians/`, `ifc/`, `sandbox/`), expected vs actual behavior, and impact assessment.
 
 We aim to acknowledge reports within **72 hours**.

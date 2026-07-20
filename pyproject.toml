@@ -64,10 +64,10 @@ all = ["ace-aegis-containment[dev,math,runpod,hf]"]
 
 [project.urls]
 Homepage = "https://www.fratres-x.com"
-Documentation = "https://github.com/FratresMedAI/A.C.E/blob/main/docs/README.md"
-Repository = "https://github.com/FratresMedAI/A.C.E"
-Issues = "https://github.com/FratresMedAI/A.C.E/issues"
-Changelog = "https://github.com/FratresMedAI/A.C.E/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/Fratres-X-AI/A.C.E/blob/main/docs/README.md"
+Repository = "https://github.com/Fratres-X-AI/A.C.E"
+Issues = "https://github.com/Fratres-X-AI/A.C.E/issues"
+Changelog = "https://github.com/Fratres-X-AI/A.C.E/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aegis"]

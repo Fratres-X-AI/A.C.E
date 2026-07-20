@@ -12,7 +12,7 @@ Thanks for helping make containment more reviewable. A.C.E is a **defensive** pr
 ## Development setup
 
 ```bash
-git clone https://github.com/FratresMedAI/A.C.E.git
+git clone https://github.com/Fratres-X-AI/A.C.E.git
 cd A.C.E
 python -m venv .venv
 # Windows: .venv\Scripts\activate

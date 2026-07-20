@@ -5,7 +5,7 @@ type: software
 authors:
   - name: "Fratres X AI"
     website: "https://www.fratres-x.com"
-repository-code: "https://github.com/FratresMedAI/A.C.E"
+repository-code: "https://github.com/Fratres-X-AI/A.C.E"
 url: "https://www.fratres-x.com"
 abstract: >-
   Auditable, layered AI containment framework that assumes breach and limits

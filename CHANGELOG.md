@@ -37,4 +37,4 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Core containment engine, IFC, guardians, audit, red-team simulator
 - Initial demos and test suite
 
-[0.3.0]: https://github.com/FratresMedAI/A.C.E/releases/tag/v0.3.0
+[0.3.0]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.0
