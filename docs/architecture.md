@@ -42,7 +42,7 @@ A.C.E assumes breach. Neural networks compress information lossily — emergent 
 
 **Decision:** Hash-chained append-only log for every containment decision.
 
-**Rationale:** Gov/DIU submissions require reconstructable audit trails. Optional DP noise applies only to exported aggregates.
+**Rationale:** External reviews and compliance packs need reconstructable audit trails. Optional DP noise applies only to exported aggregates.
 
 ### ADR-007: TEE Abstraction
 

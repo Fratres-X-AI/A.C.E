@@ -156,17 +156,17 @@ Implement the `TEEEnvironment` protocol for other platforms:
 | NVIDIA CC | Confidential Computing | GPU memory encryption |
 | AWS Nitro | Nitro Enclaves | Enclave image hash |
 
-## DIU OT Artifact Export
+## Compliance Artifact Export
 
 ```python
 from aegis.audit.metrics import ContainmentMetrics
 
 metrics = ContainmentMetrics()
 # ... after benchmark run ...
-metrics.export_compliance_artifact("ot_submission_metrics.json")
+metrics.export_compliance_artifact("compliance_metrics.json")
 ```
 
-Include tamper-proof log export:
+Include tamper-evident log export:
 
 ```python
 events = engine.audit_log.export_events(dp_epsilon=1.0)  # optional DP

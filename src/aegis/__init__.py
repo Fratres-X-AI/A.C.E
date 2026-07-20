@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 if TYPE_CHECKING:
     from aegis.core.containment_engine import ContainmentEngine

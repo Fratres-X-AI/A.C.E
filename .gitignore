@@ -12,6 +12,10 @@ htmlcov/
 .ruff_cache/
 *.egg
 
-# Local audit artifacts (regeneratable)
-artifacts/*.db
-artifacts/compliance_pack/
+# Local audit / runtime artifacts (regeneratable)
+artifacts/**
+!artifacts/.gitkeep
+*.db
+.env
+.env.*
+!.env.example

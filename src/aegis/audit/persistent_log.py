@@ -1,4 +1,4 @@
-"""SQLite-backed persistent tamper-proof audit log."""
+"""SQLite-backed persistent tamper-evident audit log."""
 
 from __future__ import annotations
 

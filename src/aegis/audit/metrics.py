@@ -75,10 +75,12 @@ class ContainmentMetrics:
         }
 
     def export_compliance_artifact(self, path: str | None = None) -> dict[str, Any]:
-        """Export auditable compliance artifact for DIU/gov submissions."""
+        """Export auditable compliance artifact (metrics snapshot + metadata)."""
+        from aegis import __version__
+
         artifact = {
             "framework": "A.C.E Aegis Containment Engine",
-            "version": "0.1.0",
+            "version": __version__,
             "generated_at": datetime.now(tz=UTC).isoformat(),
             "metrics": self.snapshot(),
             "philosophy": "assume_breach_contain_egress",

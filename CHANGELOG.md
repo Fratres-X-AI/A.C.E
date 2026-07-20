@@ -5,6 +5,8 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-07-20
+
 ### Fixed
 
 - Laplace DP noise now uses correct inverse-CDF sampling (was not Laplace)
@@ -12,6 +14,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - TEE verification fails closed for hardware-backed quotes (no length check)
 - IFC integrity: `dominates()` on READ; join uses Biba meet (min integrity)
 - Exfil tests prove tunnel/guardian blocks, not IFC short-circuits
+- Compliance artifact version field tracks package version
 
 ### Changed
 
@@ -20,6 +23,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Equivariant module documented as weight obfuscation demo; random seed
 - gVisor / Firecracker `is_available()` always False until functional
 - Linux auto-order: bubblewrap → docker → process
+- Docs: compliance export wording (no DIU-specific framing)
 
 ## [0.3.0] — 2026-05-22
 
