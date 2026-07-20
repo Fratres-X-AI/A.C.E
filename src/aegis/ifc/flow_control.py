@@ -1,4 +1,4 @@
-"""Information flow enforcement — no read-up, no write-down."""
+"""Information flow enforcement — BLP confidentiality + Biba integrity."""
 
 from __future__ import annotations
 
@@ -11,10 +11,13 @@ class FlowViolationError(PermissionError):
 
 
 class FlowControlEngine:
-    """Bell-LaPadula-style IFC enforcement engine.
+    """MLS-style IFC: Bell-LaPadula sensitivity + Biba integrity.
 
     ADR: Perfect blocking is impossible due to neural compression side channels;
     IFC limits *explicit* label violations and forces declassification gates.
+
+    Role convention: ``source`` is the data/object label; ``sink`` is the
+    subject clearance (READ) or destination label (WRITE).
     """
 
     def check_flow(
@@ -25,14 +28,20 @@ class FlowControlEngine:
     ) -> bool:
         """Return True if flow is permitted."""
         if operation == FlowOperation.READ:
-            # No read-up: reader sensitivity must be >= source sensitivity
-            return sink.sensitivity >= source.sensitivity
+            # Clearance must dominate data (no read-up on sensitivity,
+            # no read of higher-integrity-than-clearance... via dominates:
+            # sink.sens >= source.sens AND sink.integ >= source.integ).
+            return sink.dominates(source)
         if operation == FlowOperation.WRITE:
-            # No write-down: cannot write high-sensitivity data to lower label
+            # BLP no write-down on sensitivity. Integrity elevation is blocked
+            # via join (min integrity) and DECLASSIFY checks.
             return sink.sensitivity >= source.sensitivity
         if operation == FlowOperation.DECLASSIFY:
-            # Declassification always requires explicit gate (checked by policy)
-            return sink.sensitivity <= source.sensitivity
+            # May only lower/keep sensitivity and integrity
+            return (
+                sink.sensitivity <= source.sensitivity
+                and sink.integrity <= source.integrity
+            )
         return False
 
     def enforce(
@@ -45,7 +54,8 @@ class FlowControlEngine:
         if not self.check_flow(source, sink, operation):
             raise FlowViolationError(
                 f"Illegal {operation.name} flow: "
-                f"{source.sensitivity.name} -> {sink.sensitivity.name}",
+                f"{source.sensitivity.name}/{source.integrity.name} -> "
+                f"{sink.sensitivity.name}/{sink.integrity.name}",
             )
 
     def effective_output_label(
@@ -59,11 +69,12 @@ class FlowControlEngine:
         joined = inputs[0]
         for label in inputs[1:]:
             joined = joined.join(label)
-        # Output cannot exceed reader clearance (no read-up on output channel)
-        if joined.sensitivity > output_clearance.sensitivity:
+        if not output_clearance.dominates(joined):
             raise FlowViolationError(
-                f"Output label {joined.sensitivity.name} exceeds clearance "
-                f"{output_clearance.sensitivity.name}",
+                f"Output label {joined.sensitivity.name}/{joined.integrity.name} "
+                f"exceeds clearance "
+                f"{output_clearance.sensitivity.name}/"
+                f"{output_clearance.integrity.name}",
             )
         return joined
 

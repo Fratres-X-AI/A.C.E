@@ -85,9 +85,21 @@ def test_detect_platform_override(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_verify_attestation_stub() -> None:
+    from aegis.execution.tee_abstraction import AttestationQuote
+
     tee = SimulatedTEE()
     quote = tee.attest()
     assert verify_attestation_stub(quote)
+    # Hardware-backed quotes fail closed until DCAP/KDS is wired
+    forged = AttestationQuote(
+        tee_type="intel-tdx",
+        measurement=quote.measurement,
+        signature=quote.signature,
+        nonce=quote.nonce,
+        hardware_backed=True,
+        raw_report_b64="A" * 128,
+    )
+    assert verify_attestation_stub(forged) is False
 
 
 def test_session_uses_factory_tee() -> None:

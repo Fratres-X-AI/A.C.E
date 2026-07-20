@@ -5,7 +5,7 @@ Honest maturity labels. Items marked done are **prototype-complete**, not produc
 ## Phase 1 — Core (shipped)
 
 - [x] Core containment engine with layered composition
-- [x] Field encryption + equivariant research prototype
+- [x] Field encryption + weight-obfuscation demo (not HE)
 - [x] IFC + agent planner
 - [x] Guardian stack + egress controller
 - [x] Tamper-proof audit + metrics
@@ -43,11 +43,12 @@ Honest maturity labels. Items marked done are **prototype-complete**, not produc
 |-----------|--------|-----------|
 | Core pipeline | Prototype | Broader adversarial coverage |
 | Sandbox backends | Prototype | Prefer bubblewrap on bare metal for isolation claims |
-| Equivariant encryption | Research prototype | Scale + security audit |
-| TEE | Adapters + stub verify | DCAP / KDS production verification |
-| ZK proofs | No-op hook | Circom / Noir integration |
+| Weight obfuscation | Research demo (not crypto) | Group-correct transforms or drop claims |
+| TEE | Adapters; hardware verify fail-closed | DCAP / KDS production verification |
+| ZK / proofs | Placeholder digest only | Circom / Noir integration |
+| gVisor / Firecracker | Registered stubs | Real rootfs + guest exec |
 | LLM judge | Rule-based fallback | Verifier model API |
-| DP / noise helpers | Lightweight stubs | Production calibration |
+| DP / Laplace noise | Correct inverse-CDF formula | Crypto-grade calibration / accounting |
 
 ## Stance
 

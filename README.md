@@ -134,8 +134,8 @@ mypy src/aegis
 | Layer | Module | Why it matters |
 |-------|--------|----------------|
 | Field encryption | `crypto/encryption_fields` | Shrinks plaintext blast radius |
-| Equivariant transform | `crypto/equivariant` | Offline weight obfuscation (**research prototype**) |
-| Information flow control | `ifc/` | Blocks explicit illegal label flows |
+| Weight obfuscation demo | `crypto/equivariant` | Linear similarity transform — **not encryption** |
+| Information flow control | `ifc/` | BLP sensitivity + integrity via `dominates()` |
 | Agent label tracking | `ifc/agent_planner` | Propagates labels through tools and memory |
 | TEE abstraction | `execution/tee_*` | Attestation binding (adapters + stub verify) |
 | Instrumented runner | `execution/instrumented_runner` | No silent bypass of inference |
@@ -144,7 +144,7 @@ mypy src/aegis
 | Tamper-proof log | `audit/tamper_proof_log` | Hash-chained append-only trail |
 | Metrics + export | `audit/metrics`, `compliance_export` | Effectiveness score, submission packs |
 | Red-team harness | `redteam/simulator` | Self-auditing stress scenarios |
-| Sandbox runtime | `sandbox/` | bubblewrap · gVisor · Firecracker · Docker · process |
+| Sandbox runtime | `sandbox/` | bubblewrap · Docker · process (gVisor/Firecracker registered, not yet functional) |
 | Tunnel gateway | `tunnel/` | Policy-controlled ingress/egress |
 
 ## Sandbox backends
@@ -153,9 +153,9 @@ Registry-driven. Real isolation only — no fake in-process “sandbox.”
 
 | Platform | Auto order |
 |----------|------------|
-| **Linux** | `bubblewrap` → `gvisor` → `firecracker` → `docker` |
+| **Linux** | `bubblewrap` → `docker` → `process` (if allowed) |
 | **Nested containers (e.g. RunPod)** | often `process` (separate OS process; not namespace isolation) |
-| **Windows / macOS** | Docker fallback (heavier) |
+| **Windows / macOS** | Windows Sandbox → Docker fallback |
 
 ```bash
 python examples/sandbox_backend_demo.py --backend auto
@@ -183,8 +183,11 @@ Defense stays defensive. No offensive capability generation.
 - Nested cloud pods often cannot create Linux namespaces — use `process` or a bare-metal/VM host for bubblewrap
 - Docker Desktop on Windows/macOS works but is heavier than Linux-native runtimes
 - MCP adapter is a secure RPC pattern, not full MCP server-spec compliance
-- Equivariant encryption and ZK hooks are research/prototype surfaces — do not treat as production crypto claims
+- Weight-obfuscation demo and proof placeholders are **not** HE / ZK — do not treat as production crypto
+- TEE verification accepts simulated quotes only; hardware quotes fail closed until DCAP/KDS
+- Math interface reports SymPy parse success, not physical or formal verification
 - Guardian stack is primarily rule-based today; LLM-judge is on the roadmap
+- gVisor / Firecracker backends are stubs until guest workloads work
 
 ## Documentation
 

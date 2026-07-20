@@ -3,7 +3,7 @@
 from aegis.core.containment_engine import ContainmentEngine
 from aegis.core.session import Session
 from aegis.execution.mock_model import mock_llm
-from aegis.ifc.labels import INTERNAL, PUBLIC, SECRET
+from aegis.ifc.labels import PUBLIC, SECRET
 from aegis.redteam.simulator import ContainmentSimulator
 from aegis.sandbox.workloads import register_workload
 from aegis.tunnel.simulated_tunnel import SimulatedTunnel
@@ -43,6 +43,7 @@ def test_integrated_pipeline_allows_safe_output() -> None:
 
 
 def test_integrated_blocks_exfil_at_tunnel_egress() -> None:
+    """Workload must run; tunnel egress (not IFC) blocks SECRET substring."""
     engine = ContainmentEngine()
     session = Session()
     session.issue_capability("tunnel")
@@ -57,12 +58,16 @@ def test_integrated_blocks_exfil_at_tunnel_egress() -> None:
         _exfil_test_workload,
         sandbox=sandbox,
         tunnel=tunnel,
-        input_label=INTERNAL,
+        input_label=PUBLIC,
         output_clearance=PUBLIC,
     )
     tunnel.close()
     assert result.blocked
     assert result.verdict == ContainmentVerdict.BLOCK
+    assert result.sandbox_id is not None
+    assert any("Tunnel egress" in r for r in result.reasons)
+    actions = [e.event.action for e in engine.audit_log.entries]
+    assert "create" in actions or "workload_complete" in actions
 
 
 def test_integrated_ifc_violation_fail_closed() -> None:
@@ -85,9 +90,14 @@ def test_integrated_ifc_violation_fail_closed() -> None:
     )
     tunnel.close()
     assert result.blocked
+    # IFC blocks before sandbox assignment
+    assert result.sandbox_id is None
+    assert any("Illegal" in r for r in result.reasons)
 
 
 def test_redteam_integrated_scenarios() -> None:
     report = ContainmentSimulator().run_integrated_all()
     assert report.scenarios_run == 3
     assert report.catch_rate >= 0.66
+    by_name = {r.name: r for r in report.results}
+    assert by_name["cross_boundary_exfil"].caught

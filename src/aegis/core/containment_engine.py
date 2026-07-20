@@ -70,7 +70,7 @@ class ContainmentEngine:
             AuditEvent(layer="core", action="process_start", detail=session.session_id),
         )
 
-        payload = self._encrypt_fields(session, payload, sensitive_keys)
+        payload = self._seal_sensitive_fields(session, payload, sensitive_keys)
 
         if input_label and output_clearance:
             ifc_block = self._enforce_ifc(input_label, output_clearance)
@@ -80,6 +80,7 @@ class ContainmentEngine:
         for token in session.canary_tokens:
             self.guardian.register_canary(token)
 
+        payload = self._decrypt_for_inference(session, payload, sensitive_keys)
         assert self.runner is not None
         raw_output = self.runner.run(model_fn, payload)
 
@@ -135,7 +136,7 @@ class ContainmentEngine:
             ),
         )
 
-        payload = self._encrypt_fields(session, payload, sensitive_keys)
+        payload = self._seal_sensitive_fields(session, payload, sensitive_keys)
 
         ifc_block = self._enforce_ifc(input_label, output_clearance)
         if ifc_block is not None:
@@ -172,6 +173,7 @@ class ContainmentEngine:
         for token in session.canary_tokens:
             self.guardian.register_canary(token)
 
+        payload = self._decrypt_for_inference(session, payload, sensitive_keys)
         raw_output, workload_block = self._run_sandbox_workload(
             active_sandbox,
             workload_fn,
@@ -216,12 +218,13 @@ class ContainmentEngine:
             tunnel_endpoint_id=session.tunnel_endpoint_id,
         )
 
-    def _encrypt_fields(
+    def _seal_sensitive_fields(
         self,
         session: Session,
         payload: dict[str, Any],
         sensitive_keys: set[str],
     ) -> dict[str, Any]:
+        """Encrypt sensitive keys in-payload (ciphertext retained until inference)."""
         registry: FieldEncryptionRegistry = session.encryption_registry
         if not sensitive_keys:
             return payload
@@ -233,7 +236,37 @@ class ContainmentEngine:
                 detail=str(list(sensitive_keys)),
             ),
         )
-        return registry.decrypt_payload_fields(encrypted_payload)
+        return encrypted_payload
+
+    def _decrypt_for_inference(
+        self,
+        session: Session,
+        payload: dict[str, Any],
+        sensitive_keys: set[str],
+    ) -> dict[str, Any]:
+        """Explicit decrypt immediately before model/workload execution."""
+        registry: FieldEncryptionRegistry = session.encryption_registry
+        if not sensitive_keys:
+            return payload
+        plaintext = registry.decrypt_payload_fields(payload)
+        self.audit_log.append(
+            AuditEvent(
+                layer="crypto",
+                action="decrypt_for_inference",
+                detail=str(list(sensitive_keys)),
+            ),
+        )
+        return plaintext
+
+    def _encrypt_fields(
+        self,
+        session: Session,
+        payload: dict[str, Any],
+        sensitive_keys: set[str],
+    ) -> dict[str, Any]:
+        """Deprecated alias — prefer seal + decrypt_for_inference."""
+        sealed = self._seal_sensitive_fields(session, payload, sensitive_keys)
+        return self._decrypt_for_inference(session, sealed, sensitive_keys)
 
     def _enforce_ifc(
         self,
@@ -393,7 +426,6 @@ class ContainmentEngine:
         return output, final_verdict, blocked, reasons
 
     def _blocked_result(self, reasons: list[str]) -> ContainmentResult:
-        self.metrics.label_violations += 1
         return ContainmentResult(
             output=None,
             verdict=ContainmentVerdict.BLOCK,

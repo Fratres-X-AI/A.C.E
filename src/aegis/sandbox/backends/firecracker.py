@@ -5,13 +5,11 @@ from __future__ import annotations
 import json
 import os
 import socket
-import sys
 import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from aegis.sandbox.backends._subprocess import which
 from aegis.sandbox.base import SandboxBackend, SandboxBackendError, SandboxCreateConfig
 from aegis.sandbox.environment import SandboxInfo
 
@@ -31,13 +29,12 @@ class FirecrackerSandbox(SandboxBackend):
         self._processes: dict[str, Any] = {}
 
     def is_available(self) -> bool:
-        if which(_FC) is None or not sys.platform.startswith("linux"):
-            return False
-        kernel = os.environ.get("ACE_FC_KERNEL", "")
-        rootfs = os.environ.get("ACE_FC_ROOTFS", "")
-        return bool(
-            kernel and rootfs and Path(kernel).exists() and Path(rootfs).exists()
-        )
+        """Unavailable until guest workload exec is implemented.
+
+        Firecracker has no ``Exec`` action; ACE workloads cannot run without a
+        guest agent. Backend remains registered for future work only.
+        """
+        return False
 
     def create(self, create_config: SandboxCreateConfig) -> SandboxInfo:
         info = SandboxInfo(

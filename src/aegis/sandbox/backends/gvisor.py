@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import json
-import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
-from aegis.sandbox.backends._subprocess import combined_output, run_command, which
+from aegis.sandbox.backends._subprocess import combined_output, run_command
 from aegis.sandbox.base import SandboxBackend, SandboxBackendError, SandboxCreateConfig
 from aegis.sandbox.environment import SandboxInfo
 
@@ -28,7 +27,12 @@ class GVisorSandbox(SandboxBackend):
         self._container_ids: dict[str, str] = {}
 
     def is_available(self) -> bool:
-        return which(_RUNSC) is not None and sys.platform.startswith("linux")
+        """Unavailable until a real OCI rootfs + workload path ships.
+
+        Current bundle writes an empty rootfs (no ``sleep``/``python``). Kept
+        registered for future work but never auto-selected.
+        """
+        return False
 
     def create(self, create_config: SandboxCreateConfig) -> SandboxInfo:
         info = SandboxInfo(

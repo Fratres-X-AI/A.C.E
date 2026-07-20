@@ -78,14 +78,15 @@ class SimulatedTEE:
 
 
 def verify_attestation_stub(quote: AttestationQuote) -> bool:
-    """Stub for external attestation verification (DCAP / AMD KDS).
+    """Fail-closed attestation check until DCAP / AMD KDS is wired.
 
-    Replace with:
+    Accepts **simulated** quotes only. Hardware-backed quotes return False —
+    length of ``raw_report_b64`` is not verification. Replace with:
     - Intel: ``sgx_dcap_quoteverify`` or Azure Attestation SDK
-    - AMD: ``sev-tool verify`` or guest policy check against VCEK
+    - AMD: ``sev-tool verify`` / VCEK chain validation
     """
     if not quote.measurement or not quote.signature:
         return False
-    if quote.hardware_backed and quote.raw_report_b64:
-        return len(quote.raw_report_b64) > 64
+    if quote.hardware_backed:
+        return False
     return quote.tee_type.endswith("-simulated") or quote.tee_type == "simulated"

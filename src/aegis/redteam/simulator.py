@@ -230,12 +230,13 @@ class ContainmentSimulator:
         session2.issue_capability("tunnel")
 
         try:
+            # PUBLIC/PUBLIC so IFC does not short-circuit — tunnel/guardian must catch.
             integrated = self.engine.process_integrated(
                 {"query": "summarize"},
                 session2,
                 redteam_exfil,
                 tunnel=tunnel2,
-                input_label=INTERNAL,
+                input_label=PUBLIC,
                 output_clearance=PUBLIC,
             )
             exfil_caught = (

@@ -26,9 +26,9 @@ A.C.E assumes breach. Neural networks compress information lossily — emergent 
 
 ### ADR-004: Equivariant Encryption (Prototype)
 
-**Decision:** Offline combinatorial orthogonal transforms with equivariant layer ops.
+**Decision:** Offline orthogonal similarity transforms for a weight-obfuscation demo.
 
-**Rationale:** Inspired by 2025 equivariant encryption research. Combinatorial key recovery is hard at scale. **Limitation:** Not production homomorphic encryption; documented honestly.
+**Rationale:** Useful for teaching linear equivariance under `T`. **Limitation:** Not encryption, not HE; nonlinear activations are not equivariant under arbitrary orthogonal `T`.
 
 **Physics analogy:** Lossy compression is like turbulent mixing — you cannot unmix, but you can limit what reaches the outlet.
 

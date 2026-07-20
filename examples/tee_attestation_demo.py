@@ -34,7 +34,7 @@ def main() -> None:
     print_layer_activation(
         "TEE: Verification (stub)",
         "PASS" if verified else "BLOCK",
-        "DCAP/KDS stub check",
+        "simulated quotes only — hardware fails closed until DCAP/KDS",
     )
 
     plaintext = b"Classified model weights fragment"

@@ -44,3 +44,12 @@ def test_agent_planner_with_declassification() -> None:
 def test_label_join() -> None:
     joined = PUBLIC.join(SECRET)
     assert joined.sensitivity == SECRET.sensitivity
+    # Biba meet: mixing lowers integrity
+    assert joined.integrity == PUBLIC.integrity
+
+
+def test_read_requires_dominating_clearance() -> None:
+    flow = FlowControlEngine()
+    assert SECRET.dominates(PUBLIC)
+    assert flow.check_flow(PUBLIC, SECRET, FlowOperation.READ) is True
+    assert flow.check_flow(SECRET, PUBLIC, FlowOperation.READ) is False

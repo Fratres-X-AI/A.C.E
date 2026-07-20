@@ -21,10 +21,10 @@ class SecurityLabel:
         )
 
     def join(self, other: SecurityLabel) -> SecurityLabel:
-        """Lattice join — most restrictive combination."""
+        """Lattice join — highest sensitivity, lowest integrity (Biba meet)."""
         return SecurityLabel(
             sensitivity=max(self.sensitivity, other.sensitivity),
-            integrity=max(self.integrity, other.integrity),
+            integrity=min(self.integrity, other.integrity),
         )
 
     @classmethod

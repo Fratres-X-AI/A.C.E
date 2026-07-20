@@ -17,7 +17,8 @@ from aegis.utils.config import SandboxConfig
 
 logger = logging.getLogger(__name__)
 
-_linux_order = ("bubblewrap", "gvisor", "firecracker", "docker")
+# gVisor / Firecracker stay registered but is_available() is False until functional.
+_linux_order = ("bubblewrap", "docker", "process")
 _win_order = ("windows", "docker")
 
 
@@ -138,8 +139,8 @@ class SandboxRegistry:
                 )
             elif sys.platform.startswith("linux"):
                 hint = (
-                    "On Linux install bubblewrap, gVisor runsc, Firecracker "
-                    "(ACE_FC_KERNEL/ACE_FC_ROOTFS), or Docker."
+                    "On Linux install bubblewrap or Docker. "
+                    "(gVisor/Firecracker are registered but not functional yet.)"
                 )
             else:
                 hint = "Install Docker Desktop as fallback."

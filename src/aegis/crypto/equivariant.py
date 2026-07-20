@@ -1,11 +1,11 @@
-"""Equivariant encryption prototype — offline transform + equivariant ops.
+"""Weight obfuscation demo via orthogonal similarity transforms.
 
-Inspired by 2025 equivariant encryption research. This is a *prototype* demonstrating
-combinatorial orthogonal transforms with equivariant linear/activation/norm layers.
+This is **not** encryption and **not** homomorphic encryption. It demonstrates
+offline weight transforms ``W' = T W T^{-1}`` that preserve *linear* equivariance
+under ``T``. Nonlinear activations (ReLU/GELU/SiLU) are **not** equivariant under
+arbitrary orthogonal ``T`` — do not claim otherwise.
 
-Security basis: recovering the random orthogonal/permutation key from transformed
-weights is combinatorially hard at scale. Limitations: not production HE; side channels
-from compression remain. Near-zero runtime overhead — transform applied offline once.
+Seed is randomized per instance unless ``ACE_EE_SEED`` is set (for reproducible tests).
 """
 
 from __future__ import annotations
@@ -38,7 +38,11 @@ class EquivariantTransform:
     perm_inv: NDArray[np.int_] = field(init=False)
 
     def __post_init__(self) -> None:
-        rng = np.random.default_rng(42)
+        import os
+
+        seed_raw = os.environ.get("ACE_EE_SEED")
+        seed = int(seed_raw) if seed_raw is not None else None
+        rng = np.random.default_rng(seed)
         q, _ = np.linalg.qr(rng.standard_normal((self.dim, self.dim)))
         self.ortho = np.asarray(q, dtype=np.float64)
         self.ortho_inv = self.ortho.T
@@ -116,10 +120,14 @@ def rms_norm(x: FloatArray, eps: float = 1e-5) -> FloatArray:
 def equivariance_error(
     layer: EquivariantLinear,
     x: FloatArray,
-    activation: str = "relu",
+    activation: str = "none",
     tol: float = 1e-5,
 ) -> float:
-    """Measure ||T(f(x)) - f'(T(x))|| — should be near zero."""
+    """Measure ||T(f(x)) - f'(T(x))|| for the *linear* map.
+
+    Only ``activation='none'`` is expected near zero. Nonlinear activations are
+    included for experiment only — they are not group-equivariant under random T.
+    """
     tx = layer.transform.transform(x)
     f_x = layer.forward_plain(x)
     tf_x = layer.transform.transform(f_x)
@@ -138,11 +146,10 @@ def equivariance_error(
 
 
 def norm_equivariance_error(x: FloatArray, transform: EquivariantTransform) -> float:
-    """LayerNorm is shift/scale invariant — compare normalized outputs."""
+    """Diagnostic cosine gap after LayerNorm — not a true equivariance metric."""
     plain = layer_norm(x)
     tx = transform.transform(x)
     transformed = layer_norm(tx)
-    # Normalization removes scale; compare direction via cosine similarity
     cos_sim = float(
         np.dot(plain, transformed)
         / (np.linalg.norm(plain) * np.linalg.norm(transformed) + 1e-12),

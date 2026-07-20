@@ -20,9 +20,11 @@ def main() -> None:
     console.print(verified.to_json())
 
     schema = verifier.enforce_schema(verified.to_dict())
-    proof = verifier.attach_zk_proof(schema.model_dump())
+    proof = verifier.attach_proof_placeholder(schema.model_dump())
     print_layer_activation(
-        "Verification", "PASS", f"ZK stub: {proof.get('zk_proof', 'none')}"
+        "Verification",
+        "PASS",
+        f"parse ok={schema.sympy_parsed}; placeholder={proof.get('proof_placeholder')}",
     )
 
     exfil_attempts = [

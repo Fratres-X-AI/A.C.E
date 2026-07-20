@@ -43,8 +43,13 @@ def test_crypto_primitives() -> None:
     token = generate_canary_token()
     assert "ACE-CANARY" in token
     assert len(hash_canary(token)) == 16
-    noisy = add_laplace_noise(100.0, 1.0)
-    assert isinstance(noisy, float)
+    samples = [add_laplace_noise(100.0, 1.0) for _ in range(200)]
+    assert all(isinstance(s, float) for s in samples)
+    # Inverse-CDF Laplace is not a linear map of U(0,1); samples must vary
+    assert len({round(s, 6) for s in samples}) > 50
+    assert abs(sum(samples) / len(samples) - 100.0) < 5.0
+    with pytest.raises(ValueError, match="epsilon"):
+        add_laplace_noise(1.0, 0.0)
     blinded = caecator_blind_metadata({"user_id": "alice"})
     assert blinded != {"user_id": "alice"}
 
@@ -76,12 +81,16 @@ def test_egress_kill_and_throttle() -> None:
     assert "THROTTLED" in throttled
 
 
-def test_verification_json_and_zk() -> None:
+def test_verification_json_and_proof_placeholder() -> None:
     engine = VerificationEngine()
-    assert engine.validate_json_output('{"expression":"x","verified":true}') is not None
+    parsed = engine.validate_json_output('{"expression":"x","verified":true}')
+    assert parsed is not None
+    assert parsed.sympy_parsed is True
     assert engine.validate_json_output("not json") is None
-    proof = engine.attach_zk_proof({"expression": "x"})
-    assert "zk_proof" in proof
+    proof = engine.attach_proof_placeholder({"expression": "x"})
+    assert proof["proof_placeholder"].startswith("proof-placeholder:")
+    legacy = engine.attach_zk_proof({"expression": "x"})
+    assert "zk_proof" in legacy
 
 
 def test_math_physics_reject() -> None:

@@ -3,6 +3,24 @@
 All notable changes to A.C.E are documented here.  
 Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning follows SemVer where practical for a prototype stack.
 
+## [Unreleased]
+
+### Fixed
+
+- Laplace DP noise now uses correct inverse-CDF sampling (was not Laplace)
+- Field encryption keeps ciphertext until explicit `decrypt_for_inference`
+- TEE verification fails closed for hardware-backed quotes (no length check)
+- IFC integrity: `dominates()` on READ; join uses Biba meet (min integrity)
+- Exfil tests prove tunnel/guardian blocks, not IFC short-circuits
+
+### Changed
+
+- Renamed ZK attach API to proof placeholder (legacy `zk_proof` key retained)
+- Math outputs report `sympy_parsed` (not “verified” as proof)
+- Equivariant module documented as weight obfuscation demo; random seed
+- gVisor / Firecracker `is_available()` always False until functional
+- Linux auto-order: bubblewrap → docker → process
+
 ## [0.3.0] — 2026-05-22
 
 ### Added
