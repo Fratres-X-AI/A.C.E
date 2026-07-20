@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/version-0.3.1-informational" alt="Version 0.3.1" />
   <img src="https://img.shields.io/badge/maturity-prototype-0ea5e9" alt="Maturity: prototype" />
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-3776AB" alt="Python" />
-  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" />
+  <img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue" alt="License" />
   <img src="https://img.shields.io/badge/stance-defensive%20only-111827" alt="Defensive only" />
 </p>
 
@@ -210,7 +210,10 @@ Defense stays defensive. No offensive capability generation.
 
 ## License
 
-[AGPL-3.0-or-later](LICENSE) — source available for audit and downstream scrutiny.
+Copyright (C) 2026 Fratres X AI
+
+A.C.E is free software under the [GNU Affero General Public License v3 or later](LICENSE) (AGPL-3.0-or-later).  
+Source available for audit and downstream scrutiny. If you modify and run it as a network service, AGPL requires you to offer corresponding source to users of that service.
 
 ## Fratres X AI
 

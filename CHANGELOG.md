@@ -5,6 +5,10 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 ## [Unreleased]
 
+### Fixed
+
+- Ship full GNU AGPL-3.0 text in `LICENSE` (was a short stub; GitHub detected as Other)
+
 ## [0.3.1] — 2026-07-20
 
 ### Fixed

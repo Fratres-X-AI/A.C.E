@@ -1,0 +1,11 @@
+A.C.E — Aegis Containment Engine
+Copyright (C) 2026 Fratres X AI
+https://www.fratres-x.com
+
+This product is licensed under the GNU Affero General Public License
+version 3 or any later version. See the LICENSE file for the full text.
+
+Third-party dependencies retain their own licenses (see pyproject.toml).
+Model weights and inference providers you connect are separate works
+under their own terms (e.g. Hugging Face model cards) and are not
+redistributed by this repository.
