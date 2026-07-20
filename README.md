@@ -1,9 +1,7 @@
 <p align="center">
-  <img src="docs/assets/ace-mark.png" alt="A.C.E mark" width="120" />
+  <img src="docs/assets/ace-social-preview.png" alt="A.C.E — Aegis Containment Engine" width="100%" />
 </p>
 
-<h1 align="center">A.C.E</h1>
-<p align="center"><strong>Aegis Containment Engine</strong></p>
 <p align="center">
   Auditable, layered AI containment for systems that must survive scrutiny.<br/>
   Built by <a href="https://www.fratres-x.com">Fratres X AI</a>.
