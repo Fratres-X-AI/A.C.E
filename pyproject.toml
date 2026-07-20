@@ -129,7 +129,7 @@ ignore = [
 "src/aegis/redteam/simulator.py" = ["PLR0915"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -141,6 +141,11 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 mypy_path = "src"
 packages = ["aegis"]
+
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["sympy.*"]
