@@ -8,14 +8,14 @@ Honest maturity labels. Items marked done are **prototype-complete**, not produc
 - [x] Field encryption + weight-obfuscation demo (not HE)
 - [x] IFC + agent planner
 - [x] Guardian stack + egress controller
-- [x] Tamper-proof audit + metrics
+- [x] Tamper-evident audit + metrics
 - [x] Red-team simulator + canary
 - [x] Working demos and CI-gated test suite
 
 ## Phase 2 — Prototype hardening (current: v0.3.x)
 
-- [x] Pluggable sandbox backends (bubblewrap / gVisor / Firecracker / Docker / process)
-- [x] TEE attestation adapters (Intel TDX / AMD SEV-SNP + auto-detect factory)
+- [x] Pluggable sandbox backends (bubblewrap / Docker / process / Windows Sandbox; gVisor & Firecracker registered stubs)
+- [x] TEE attestation adapters (Intel TDX / AMD SEV-SNP + auto-detect factory; hardware verify fail-closed)
 - [x] HF local + Inference API integration paths
 - [ ] LLM-judge guardian with configurable verifier model
 - [ ] Persistent audit as default path for all demos

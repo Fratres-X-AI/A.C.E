@@ -142,7 +142,7 @@ mypy src/aegis
 | Instrumented runner | `execution/instrumented_runner` | No silent bypass of inference |
 | Output guardian | `guardians/output_guardian` | PII, entropy, stego, canaries |
 | Egress controller | `guardians/egress_controller` | Throttle / block / kill session |
-| Tamper-proof log | `audit/tamper_proof_log` | Hash-chained append-only trail |
+| Tamper-evident log | `audit/tamper_proof_log` | Hash-chained append-only trail |
 | Metrics + export | `audit/metrics`, `compliance_export` | Effectiveness score, submission packs |
 | Red-team harness | `redteam/simulator` | Self-auditing stress scenarios |
 | Sandbox runtime | `sandbox/` | bubblewrap · Docker · process (gVisor/Firecracker registered, not yet functional) |

@@ -8,6 +8,13 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 ### Fixed
 
 - Ship full GNU AGPL-3.0 text in `LICENSE` (was a short stub; GitHub detected as Other)
+- Align sandbox docs with real auto-order; mark gVisor/Firecracker unavailable
+- Normalize user-facing “tamper-evident” wording
+
+### Added
+
+- Dependabot (pip + GitHub Actions), NOTICE trademark carve-out, CoC enforcement guidelines
+- Broader `.gitignore` for local env, editor, and model-cache junk
 
 ## [0.3.1] — 2026-07-20
 
@@ -27,7 +34,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Equivariant module documented as weight obfuscation demo; random seed
 - gVisor / Firecracker `is_available()` always False until functional
 - Linux auto-order: bubblewrap → docker → process
-- Docs: compliance export wording (no DIU-specific framing)
+- Docs: compliance export wording (removed agency-specific framing)
 
 ## [0.3.0] — 2026-05-22
 
@@ -63,4 +70,5 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Core containment engine, IFC, guardians, audit, red-team simulator
 - Initial demos and test suite
 
-[0.3.0]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.0
+[0.3.1]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.1
+[0.3.0]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.1

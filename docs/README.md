@@ -21,6 +21,8 @@ Prototype documentation for the Aegis Containment Engine. Claims stay conservati
 | [assets/ace-logo-shield-ace.png](assets/ace-logo-shield-ace.png) | Alternate shield concept |
 | [assets/ace-logo-layers.png](assets/ace-logo-layers.png) | Alternate layers concept |
 
+Brand marks are Fratres X AI assets. AGPL covers the software; it does not grant trademark rights. See [NOTICE](../NOTICE).
+
 ## Design stance
 
 Aligned with [Fratres X AI](https://www.fratres-x.com):

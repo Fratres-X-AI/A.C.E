@@ -1,4 +1,4 @@
-"""gVisor (runsc) sandbox backend."""
+"""gVisor (runsc) sandbox backend — registered stub until guest exec works."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ _RUNSC = "runsc"
 
 
 class GVisorSandbox(SandboxBackend):
-    """OCI sandbox via gVisor runsc."""
+    """gVisor OCI sandbox stub. ``is_available()`` is False until functional."""
 
     name = "gvisor"
     recommended_for_local = True

@@ -111,10 +111,10 @@ python examples/integrated_sandbox_tunnel_demo.py
 
 | Backend | Effort | When to use |
 |---------|--------|-------------|
-| **bubblewrap** | Easiest — one `apt install` | Default; daily dev and smoke tests |
+| **bubblewrap** | Easiest — one `apt install` | Preferred on bare-metal / VM Linux |
 | **docker** | Medium — Docker daemon on pod | Fallback if bwrap unavailable |
-| **gvisor** | Hard — install `runsc` + rootfs | Stronger syscall isolation |
-| **firecracker** | Hardest — kernel + rootfs images | MicroVM production; set `ACE_FC_KERNEL` and `ACE_FC_ROOTFS` |
+| **process** | Default on nested containers | Separate OS process; **not** namespace isolation |
+| **gvisor / firecracker** | Not available yet | Registered stubs — `is_available()` is False |
 
 Set explicitly:
 

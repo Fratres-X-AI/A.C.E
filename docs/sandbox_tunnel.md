@@ -8,12 +8,15 @@ A.C.E v0.3.0 adds **self-hosted sandbox isolation** and **MCP-style tunnel gatew
 
 | OS | Primary backend | Auto-resolve order |
 |----|-----------------|-------------------|
-| Linux | bubblewrap | `bubblewrap` → `gvisor` → `firecracker` → `docker` |
-| Windows / macOS | Docker (fallback) | `docker` |
+| Linux | bubblewrap | `bubblewrap` → `docker` → `process` |
+| Windows | Windows Sandbox | `windows` → `docker` |
+| macOS | Docker | `docker` |
 
 Backends declare `platforms` and `is_compatible()`; the registry filters incompatible backends before auto-selection. Linux-only backends raise a clear `SandboxBackendError` when requested on Windows.
 
-**Docker fallback:** Cross-platform but **not recommended on Windows** — Docker Desktop is heavy. A warning is logged when Docker is auto-selected on Windows.
+**gVisor / Firecracker:** Registered for future use, but `is_available()` is always `False` until guest workloads are functional. Do not select them for production demos.
+
+**Docker fallback:** Cross-platform but heavier on Windows/macOS (Docker Desktop). A warning is logged when Docker is auto-selected on Windows.
 
 ## Architecture Decision Records
 
@@ -22,10 +25,11 @@ Backends declare `platforms` and `is_compatible()`; the registry filters incompa
 | Option | Isolation | Portability | Choice |
 |--------|-----------|-------------|--------|
 | bubblewrap | Linux namespaces + seccomp | Linux laptops/servers | Primary on Linux |
-| gVisor / Firecracker | Stronger VM isolation | Linux production | Secondary on Linux |
-| Docker | Kernel namespaces, cgroups | Cross-platform fallback | Last resort (heavy on Windows) |
+| Docker | Kernel namespaces, cgroups | Cross-platform fallback | After bubblewrap / Windows Sandbox |
+| process | Separate OS process only | Nested containers (e.g. RunPod) | Isolation-limited fallback |
+| gVisor / Firecracker | Planned stronger isolation | Linux (future) | Registered stubs — not available |
 
-**Decision:** `SandboxManager` with `backend: auto` uses `_LINUX_ORDER` on Linux and Docker-only fallback on Windows/macOS. Subprocess isolation avoids heavy SDK dependencies. No simulated/in-process sandbox in production code.
+**Decision:** `SandboxManager` with `backend: auto` uses bubblewrap → docker → process on Linux, Windows Sandbox → docker on Windows, and Docker on macOS. No simulated/in-process sandbox masquerading as isolation.
 
 ### ADR-002: Tunnel zero-trust model
 
@@ -48,8 +52,8 @@ Cloudflare, WireGuard, and Tailscale integrations are **config generators only**
 |--------|------|
 | `sandbox/base.py` | `SandboxBackend` ABC with `platforms` / `is_compatible()` |
 | `sandbox/backends/bubblewrap.py` | Linux bwrap isolation |
-| `sandbox/backends/gvisor.py` | gVisor runsc OCI sandbox |
-| `sandbox/backends/firecracker.py` | Firecracker microVM |
+| `sandbox/backends/gvisor.py` | gVisor stub (`is_available()` False) |
+| `sandbox/backends/firecracker.py` | Firecracker stub (`is_available()` False) |
 | `sandbox/backends/docker.py` | Docker CLI fallback |
 | `sandbox/registry.py` | Platform-aware backend registry |
 | `sandbox/manager.py` | Factory + session facade |
@@ -82,16 +86,14 @@ Callable workloads must be registered with `@register_workload("name")` before r
 2. Set `sandbox.backend: auto` or `bubblewrap` in policy
 3. `python examples/sandbox_backend_demo.py --backend auto`
 
-### gVisor on RunPod
+### gVisor / Firecracker (not available yet)
 
-1. Install `runsc` on the GPU node
-2. Set `sandbox.backend: gvisor` or rely on Linux auto-resolve
-3. Provide OCI bundle rootfs as needed
+These backends are registered for API stability but report unavailable until rootfs/guest execution lands. Prefer bubblewrap on Linux hosts, or `process` inside nested containers.
 
 ### Docker on Windows/macOS
 
 1. Install Docker Desktop
-2. Set `sandbox.backend: auto` (Docker is the fallback)
+2. Set `sandbox.backend: auto` (Docker is the Windows/macOS fallback after Windows Sandbox where applicable)
 3. Expect a warning about resource usage on Windows
 
 ### Cloudflare Tunnel

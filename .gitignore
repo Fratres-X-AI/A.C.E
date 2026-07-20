@@ -16,6 +16,26 @@ htmlcov/
 artifacts/**
 !artifacts/.gitkeep
 *.db
+*.sqlite3
+*.log
+
+# Secrets and local env
 .env
 .env.*
 !.env.example
+
+# Editor / OS junk
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Model / cache noise (never commit weights)
+.cache/
+huggingface/
+*.gguf
+*.safetensors
+*.bin
+!**/py.typed

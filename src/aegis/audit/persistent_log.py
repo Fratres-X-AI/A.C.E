@@ -15,7 +15,7 @@ from aegis.utils.typing import AuditEvent
 
 @dataclass
 class PersistentTamperProofLog(TamperProofLog):
-    """Tamper-proof log that persists hash chain entries to SQLite.
+    """Tamper-evident log that persists hash chain entries to SQLite.
 
     Survives process restarts — suitable for local audits without cloud infra.
     """

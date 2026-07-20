@@ -64,4 +64,4 @@ Do **not** open a public issue for containment bypasses. See [SECURITY.md](SECUR
 
 ## Questions
 
-Use GitHub Discussions/Issues for design questions, or contact Fratres X AI via [fratres-x.com](https://www.fratres-x.com).
+Use [GitHub Issues](https://github.com/Fratres-X-AI/A.C.E/issues) for design questions and feature proposals, or contact Fratres X AI via [fratres-x.com](https://www.fratres-x.com).

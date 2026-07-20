@@ -1,4 +1,4 @@
-"""Firecracker microVM sandbox backend."""
+"""Firecracker microVM sandbox backend — registered stub until guest exec works."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ _FC = "firecracker"
 
 
 class FirecrackerSandbox(SandboxBackend):
-    """Firecracker microVM isolation for server/RunPod deployments."""
+    """Firecracker microVM stub. ``is_available()`` is False until guest exec works."""
 
     name = "firecracker"
     recommended_for_local = False
