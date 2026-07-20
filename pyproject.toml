@@ -10,14 +10,23 @@ readme = "README.md"
 license = "AGPL-3.0-or-later"
 requires-python = ">=3.11"
 authors = [{ name = "Fratres X AI" }]
-keywords = ["ai-safety", "containment", "information-flow-control", "security"]
+keywords = [
+    "ai-safety",
+    "containment",
+    "information-flow-control",
+    "sandbox",
+    "audit",
+    "defensive-security",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -54,10 +63,11 @@ hf = [
 all = ["ace-aegis-containment[dev,math,runpod,hf]"]
 
 [project.urls]
-Homepage = "https://github.com/FratresMedAI/A.C.E"
-Documentation = "https://github.com/FratresMedAI/A.C.E#readme"
+Homepage = "https://www.fratres-x.com"
+Documentation = "https://github.com/FratresMedAI/A.C.E/blob/main/docs/README.md"
 Repository = "https://github.com/FratresMedAI/A.C.E"
 Issues = "https://github.com/FratresMedAI/A.C.E/issues"
+Changelog = "https://github.com/FratresMedAI/A.C.E/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/aegis"]

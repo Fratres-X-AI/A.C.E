@@ -1,22 +1,26 @@
 # A.C.E Extension Roadmap
 
-## Phase 1 — Current (v0.1.0)
+Honest maturity labels. Items marked done are **prototype-complete**, not production-certified.
+
+## Phase 1 — Core (shipped)
 
 - [x] Core containment engine with layered composition
-- [x] Field encryption + equivariant prototype
+- [x] Field encryption + equivariant research prototype
 - [x] IFC + agent planner
 - [x] Guardian stack + egress controller
 - [x] Tamper-proof audit + metrics
 - [x] Red-team simulator + canary
-- [x] Working demos and test suite
+- [x] Working demos and CI-gated test suite
 
-## Phase 2 — Production Hardening
+## Phase 2 — Prototype hardening (current: v0.3.x)
 
-- [x] Real TEE attestation adapters (Intel TDX / AMD SEV-SNP + auto-detect factory)
+- [x] Pluggable sandbox backends (bubblewrap / gVisor / Firecracker / Docker / process)
+- [x] TEE attestation adapters (Intel TDX / AMD SEV-SNP + auto-detect factory)
+- [x] HF local + Inference API integration paths
 - [ ] LLM-judge guardian with configurable verifier model
-- [ ] Persistent audit log storage (SQLite / append-only file)
-- [ ] Capability token signing with HSM integration
-- [ ] Gray Swan evaluation harness integration
+- [ ] Persistent audit as default path for all demos
+- [ ] Capability token signing with HSM / KMS integration
+- [ ] External eval harness hooks (e.g. Gray Swan-style scenarios)
 
 ## Phase 3 — Scale
 
@@ -27,18 +31,24 @@
 
 ## Phase 4 — Ecosystem
 
-- [ ] FratresCustosAI integration plugin
-- [ ] Ollama / vLLM / RunPod official adapters
-- [ ] DIU OT submission template pack
+- [ ] Fratres X AI product plugins / adapters
+- [ ] Official Ollama / vLLM / RunPod adapters
+- [ ] Compliance submission template pack
 - [ ] Formal verification hooks (Lean / Coq integration points)
 - [ ] Real ZK proof generation for high-stakes math outputs
 
-## Known Limitations
+## Component maturity
 
-| Component | Status | Next Step |
+| Component | Status | Next step |
 |-----------|--------|-----------|
-| Equivariant Encryption | Research prototype | Scale + security audit |
-| TEE | Intel TDX + AMD SEV-SNP adapters | DCAP/KDS production verification |
-| ZK Proofs | No-op hook | Circom / Noir integration |
-| LLM Judge | Rule-based fallback | Verifier model API |
-| DP/Caecator | Lightweight stubs | Production noise calibration |
+| Core pipeline | Prototype | Broader adversarial coverage |
+| Sandbox backends | Prototype | Prefer bubblewrap on bare metal for isolation claims |
+| Equivariant encryption | Research prototype | Scale + security audit |
+| TEE | Adapters + stub verify | DCAP / KDS production verification |
+| ZK proofs | No-op hook | Circom / Noir integration |
+| LLM judge | Rule-based fallback | Verifier model API |
+| DP / noise helpers | Lightweight stubs | Production calibration |
+
+## Stance
+
+Aligned with [Fratres X AI](https://www.fratres-x.com): physics and constraints before narrative, prototype honesty, adversarial thinking, defensive systems only.

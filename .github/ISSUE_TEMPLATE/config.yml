@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Fratres X AI
+    url: https://www.fratres-x.com
+    about: Project home, consulting, and meeting requests
+  - name: Security vulnerability
+    url: https://github.com/FratresMedAI/A.C.E/security/advisories/new
+    about: Private reporting for containment bypasses (do not file a public issue)

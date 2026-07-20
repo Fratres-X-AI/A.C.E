@@ -1,18 +1,48 @@
-# A.C.E — Aegis Containment Engine
+<p align="center">
+  <img src="docs/assets/ace-mark.png" alt="A.C.E mark" width="120" />
+</p>
 
-**Repository:** [github.com/FratresMedAI/A.C.E](https://github.com/FratresMedAI/A.C.E)
+<h1 align="center">A.C.E</h1>
+<p align="center"><strong>Aegis Containment Engine</strong></p>
+<p align="center">
+  Auditable, layered AI containment for systems that must survive scrutiny.<br/>
+  Built by <a href="https://www.fratres-x.com">Fratres X AI</a>.
+</p>
 
-**Auditable, layered AI containment and defensive enforcement.**
+<p align="center">
+  <a href="https://github.com/FratresMedAI/A.C.E/actions/workflows/ci.yml"><img src="https://github.com/FratresMedAI/A.C.E/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/maturity-prototype-0ea5e9" alt="Maturity: prototype" />
+  <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-3776AB" alt="Python" />
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="License" />
+  <img src="https://img.shields.io/badge/stance-defensive%20only-111827" alt="Defensive only" />
+</p>
 
-We do not sell "unbreakable AI." We build auditable containment systems that **assume breach** and rigorously limit blast radius and exfiltration. A.C.E delivers measurable, verifiable risk reduction through defense-in-depth — composable layers that control what (if anything) gets out in usable form.
+---
 
-## Vision
+**No unbreakable AI. No magic perimeter.**  
+A.C.E assumes breach and rigorously limits what can leave a workload in usable form — with reviewable evidence, honest maturity labels, and measurable catch rates.
 
-Neural compression creates irreducible mixing and side channels. Perfect perimeter blocking is impossible. A.C.E inverts the threat model:
+> Assume breach. Contain egress. Measure everything.
 
-- **Let inputs in** — run the workload
-- **Control egress** — guardians, IFC, encryption fields, audit
-- **Measure everything** — tamper-evident logs, containment metrics, compliance artifacts
+## Maturity
+
+| Label | Meaning |
+|-------|---------|
+| **Prototype** | Working end-to-end demos, CI-gated tests, real sandbox backends, red-team harness |
+| **Not production-hardened** | TEE quote verification stubs, rule-based guardians (LLM-judge optional), process sandbox on nested hosts is isolation-limited |
+
+We separate research, prototype, and production boundaries on purpose. Claims stay conservative.
+
+## What A.C.E is
+
+A composable containment stack you wrap around model and agent workloads:
+
+1. **Ingress** — field encryption, IFC labels, tunnel policy
+2. **Boundary** — pluggable sandbox runtime + instrumented execution
+3. **Egress** — output guardians, rate limits, session kill
+4. **Audit** — hash-chained tamper-evident logs + compliance export
+
+Perfect blocking is impossible under neural compression and side channels. A.C.E inverts the problem: run the work, control the exit, prove what happened.
 
 ## Architecture
 
@@ -21,7 +51,6 @@ flowchart TB
     subgraph ingress [Ingress]
         Input[UserInput]
         EncFields[EncryptionFields]
-        EE[EquivariantTransform]
         Labels[IFCLabels]
     end
     subgraph boundary [Boundary]
@@ -38,7 +67,7 @@ flowchart TB
         Log[TamperProofLog]
         Metrics[ContainmentMetrics]
     end
-    Input --> EncFields --> EE --> Labels
+    Input --> EncFields --> Labels
     Labels --> TunnelIn
     TunnelIn -->|"IFC + policy allow"| Sandbox
     Sandbox --> Runner
@@ -53,140 +82,134 @@ flowchart TB
 ## Quickstart
 
 ```bash
-cd "ACE Engine"
+git clone https://github.com/FratresMedAI/A.C.E.git
+cd A.C.E
 python -m venv .venv
-.venv\Scripts\activate        # Windows
+
+# Windows
+.venv\Scripts\activate
+# Linux / macOS
+# source .venv/bin/activate
+
 pip install -e ".[dev]"
+```
 
-# Run demos
-python examples/exfil_attempt_demo.py
-python examples/secure_agent_demo.py
-python examples/math_physics_advisor_demo.py
-python examples/containment_benchmark.py
+### Prove containment (no GPU)
+
+```bash
+python examples/containment_benchmark.py   # red-team catch rate
+python examples/sandbox_exfil_demo.py      # sandbox + egress block
+python scripts/export_compliance_pack.py  # artifacts/compliance_pack/
+```
+
+### Local mock agent (full stack, laptop-friendly)
+
+```bash
 python examples/local_mock_agent_demo.py
-python examples/sandbox_backend_demo.py --backend auto
-python examples/integrated_sandbox_tunnel_demo.py
-python examples/sandbox_exfil_demo.py
-python examples/sandbox_backend_demo.py
-python scripts/export_compliance_pack.py
+```
 
-# Test suite
+### Real model paths
+
+| Path | When to use |
+|------|-------------|
+| [HF Inference API](docs/runpod_quickstart.md#hugging-face-inference-api--llama-no-gpu-no-weight-download) | Llama via `HF_TOKEN` + router — no GPU download |
+| [Local HF weights](docs/runpod_quickstart.md#real-hugging-face-model-small-default) | Small ungated models on a GPU pod |
+| [Integration guide](docs/integration_guide.md) | Wire Ollama / vLLM / your handler |
+
+```bash
+export HF_TOKEN=hf_...
+bash scripts/runpod_api_setup.sh
+```
+
+### Tests
+
+```bash
 pytest --cov=aegis --cov-report=term-missing
-ruff check src tests
+ruff check src tests examples scripts
 mypy src/aegis
 ```
 
-## Feature Matrix
+## Layers
 
-| Layer | Module | Why It Matters |
+| Layer | Module | Why it matters |
 |-------|--------|----------------|
-| Field Encryption | `crypto/encryption_fields` | Limits in-memory blast radius of sensitive inputs |
-| Equivariant Encryption | `crypto/equivariant` | Offline weight obfuscation with equivariant ops (prototype) |
-| Information Flow Control | `ifc/` | Prevents explicit label violations (no read-up / no write-down) |
-| Agent Label Tracking | `ifc/agent_planner` | Fides-style propagation through tools and memory |
-| TEE Abstraction | `execution/tee_abstraction` | Attested execution binding for confidential compute |
-| Instrumented Runner | `execution/instrumented_runner` | No bypass paths for inference |
-| Math/Physics Interface | `execution/math_physics` | Structured verified outputs only — no free-text exfil |
-| Output Guardian | `guardians/output_guardian` | PII, entropy, steganography, canary detection |
-| Egress Controller | `guardians/egress_controller` | Rate limit, throttle, session kill |
-| Verification | `guardians/verification` | JSON schema, ensemble consensus, ZK hooks |
-| Tamper-Proof Log | `audit/tamper_proof_log` | Hash-chained append-only audit trail |
-| Metrics | `audit/metrics` | Containment effectiveness score, compliance export |
-| Red-Team Simulator | `redteam/simulator` | Self-auditing stress tests |
-| Sandbox Runtime | `sandbox/` | Pluggable: bubblewrap, gVisor, Firecracker, Docker |
-| Tunnel Gateway | `tunnel/` | Policy-controlled ingress/egress with MCP adapter |
+| Field encryption | `crypto/encryption_fields` | Shrinks plaintext blast radius |
+| Equivariant transform | `crypto/equivariant` | Offline weight obfuscation (**research prototype**) |
+| Information flow control | `ifc/` | Blocks explicit illegal label flows |
+| Agent label tracking | `ifc/agent_planner` | Propagates labels through tools and memory |
+| TEE abstraction | `execution/tee_*` | Attestation binding (adapters + stub verify) |
+| Instrumented runner | `execution/instrumented_runner` | No silent bypass of inference |
+| Output guardian | `guardians/output_guardian` | PII, entropy, stego, canaries |
+| Egress controller | `guardians/egress_controller` | Throttle / block / kill session |
+| Tamper-proof log | `audit/tamper_proof_log` | Hash-chained append-only trail |
+| Metrics + export | `audit/metrics`, `compliance_export` | Effectiveness score, submission packs |
+| Red-team harness | `redteam/simulator` | Self-auditing stress scenarios |
+| Sandbox runtime | `sandbox/` | bubblewrap · gVisor · Firecracker · Docker · process |
+| Tunnel gateway | `tunnel/` | Policy-controlled ingress/egress |
 
-## Sandbox Backends
+## Sandbox backends
 
-A.C.E uses a **registry-driven sandbox layer** with real isolation only — no simulated/in-process mode. Backends declare supported `platforms`; the registry auto-selects based on OS.
+Registry-driven. Real isolation only — no fake in-process “sandbox.”
 
-### Platform Support
-
-| Platform | Primary backend | Auto-resolve order |
-|----------|-----------------|-------------------|
-| **Linux** | bubblewrap | `bubblewrap` → `gvisor` → `firecracker` → `docker` |
-| **Windows / macOS** | Docker (fallback) | `docker` |
-
-| Backend | Use case | Availability |
-|---------|----------|--------------|
-| **bubblewrap** | Low-overhead Linux namespaces + seccomp | `bwrap` on PATH, Linux only |
-| **gvisor** | Stronger syscall isolation via runsc | `runsc` on PATH, Linux only |
-| **firecracker** | microVM isolation (RunPod/server) | `ACE_FC_KERNEL` + `ACE_FC_ROOTFS`, Linux only |
-| **docker** | Cross-platform fallback | Docker daemon; **heavy on Windows** |
-
-Configure via [`policy.yaml`](policy.yaml) `sandbox.backend` or `ACE_SANDBOX_BACKEND`.
-
-Callable workloads must be registered with `@register_workload("name")` before running inside an isolated sandbox (see `aegis.sandbox.workloads`).
+| Platform | Auto order |
+|----------|------------|
+| **Linux** | `bubblewrap` → `gvisor` → `firecracker` → `docker` |
+| **Nested containers (e.g. RunPod)** | often `process` (separate OS process; not namespace isolation) |
+| **Windows / macOS** | Docker fallback (heavier) |
 
 ```bash
 python examples/sandbox_backend_demo.py --backend auto
-python examples/sandbox_backend_demo.py --loop-available
-```
-
-**Docker on Windows/macOS:** Docker is the auto-resolve fallback when Linux-native runtimes are unavailable. Build the sandbox image first:
-
-```bash
+# Docker image (Windows/macOS or Docker-capable hosts):
 docker build -f Dockerfile.sandbox -t ace-aegis-sandbox:local .
-python examples/runpod_smoke.py --backend docker
 ```
 
-See [`docs/runpod_quickstart.md`](docs/runpod_quickstart.md) for RunPod one-liners.
+Policy: [`policy.yaml`](policy.yaml) · env: `ACE_SANDBOX_BACKEND`
 
-## Trade-offs
+Callable workloads must be registered with `@register_workload("name")` before isolated execution.
 
-| Choice | Security Benefit | Performance Cost |
-|--------|-----------------|------------------|
-| Field encryption | Smaller plaintext exposure | ~1ms per field (Fernet) |
-| Equivariant transform (offline) | Weight obfuscation | Near-zero at runtime (prototype) |
-| Guardian entropy scan | Catches high-density exfil | O(n) on output length |
-| IFC enforcement | Blocks illegal label flows | O(steps) per request |
-| Tamper-proof log | Full audit reconstructability | O(1) append, O(n) verify |
-| Fail-closed policy | No silent bypass on ambiguity | May block edge cases |
-| Bubblewrap sandbox | Real isolation, minimal overhead | Linux only |
-| Docker sandbox | Real isolation, portable fallback | Heavy on Windows (Docker Desktop) |
-| Tunnel policy gate | Zero-trust boundary control | Per-request validation latency |
+## Evidence over narrative
 
-## Local-Only Workflow (no Ollama / no cloud)
+A.C.E is built for review:
 
-Low-spec laptops can run the full stack with a **mock model** and export audit artifacts:
+- **Red-team scenarios** with reported catch rate
+- **Hash-chained audit** reconstructable after the fact
+- **Compliance packs** under `artifacts/compliance_pack/`
+- **Documented trade-offs** (security benefit vs cost)
 
-```bash
-python examples/local_mock_agent_demo.py   # agent + IFC + persistent SQLite audit
-python scripts/export_compliance_pack.py   # benchmark + manifest + file hashes
-```
+Defense stays defensive. No offensive capability generation.
 
-Outputs land in `artifacts/compliance_pack/` with a `manifest.json` suitable for submissions.
+## Known limitations
 
-Default policy: [`policy.yaml`](policy.yaml)
-
-1. **Real TEE**: Use `create_tee_environment()` — Intel TDX / AMD SEV-SNP auto-detected; see `examples/tee_attestation_demo.py`
-2. **Scale EE**: Batch offline transforms for Llama-scale weights
-3. **LLM Judge**: Replace `llm_judge_stub` with verifier model API
-4. **Policy-as-code**: Load YAML from `Policy.from_file("policy.yaml")`
-5. **Ollama/RunPod**: Wrap inference in `InstrumentedRunner` or `process_integrated()` (see `docs/integration_guide.md`)
-
-## Known Limitations (v0.3.0)
-
-- Linux backends (bubblewrap, gVisor, Firecracker) are incompatible on Windows by design
-- Docker Desktop on Windows/macOS is the fallback — heavier than Linux-native runtimes
-- MCP adapter is a secure RPC pattern, not full MCP server spec compliance
-- Cloudflare/Tailscale configs are templates requiring manual daemon deployment
-
-## Compliance Notes
-
-- AGPLv3 license — source availability for audit
-- Exportable compliance artifacts via `ContainmentMetrics.export_compliance_artifact()`
-- Tamper-evident hash-chained logs suitable for OT submissions
-- Defensive-only — no offensive capability generation
-- All trade-offs documented with measurement hooks
-
-## License
-
-AGPLv3 — see [LICENSE](LICENSE).
+- Nested cloud pods often cannot create Linux namespaces — use `process` or a bare-metal/VM host for bubblewrap
+- Docker Desktop on Windows/macOS works but is heavier than Linux-native runtimes
+- MCP adapter is a secure RPC pattern, not full MCP server-spec compliance
+- Equivariant encryption and ZK hooks are research/prototype surfaces — do not treat as production crypto claims
+- Guardian stack is primarily rule-based today; LLM-judge is on the roadmap
 
 ## Documentation
 
-- [Architecture](docs/architecture.md)
-- [Sandbox + Tunnel](docs/sandbox_tunnel.md)
-- [Integration Guide](docs/integration_guide.md)
-- [Extension Roadmap](docs/extension_roadmap.md)
+| Doc | Contents |
+|-----|----------|
+| [Architecture](docs/architecture.md) | Layer model and design intent |
+| [Sandbox + Tunnel](docs/sandbox_tunnel.md) | Isolation and boundary gates |
+| [Integration](docs/integration_guide.md) | Ollama, RunPod, TEE notes |
+| [RunPod quickstart](docs/runpod_quickstart.md) | Smoke, HF weights, Inference API |
+| [Roadmap](docs/extension_roadmap.md) | Phased extension plan |
+| [Docs index](docs/README.md) | Full index |
+
+## Contributing & security
+
+- [Contributing](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md) — private vulnerability reports preferred
+- [Changelog](CHANGELOG.md)
+
+## License
+
+[AGPL-3.0-or-later](LICENSE) — source available for audit and downstream scrutiny.
+
+## Fratres X AI
+
+A.C.E is part of the Fratres X AI lab — reviewable AI, autonomy, and defensive technology prototypes with physics-first modeling and honest maturity labels.
+
+**Site:** [fratres-x.com](https://www.fratres-x.com) · **Org:** [FratresMedAI](https://github.com/FratresMedAI)
