@@ -143,11 +143,6 @@ mypy_path = "src"
 packages = ["aegis"]
 
 [[tool.mypy.overrides]]
-module = ["numpy", "numpy.*"]
-follow_imports = "skip"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 module = ["sympy.*"]
 ignore_missing_imports = true
 
