@@ -5,6 +5,8 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-07-20
+
 ### Fixed
 
 - Ship full GNU AGPL-3.0 text in `LICENSE` (was a short stub; GitHub detected as Other)
@@ -70,5 +72,6 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 - Core containment engine, IFC, guardians, audit, red-team simulator
 - Initial demos and test suite
 
+[0.3.2]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.2
 [0.3.1]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.1
 [0.3.0]: https://github.com/Fratres-X-AI/A.C.E/releases/tag/v0.3.1

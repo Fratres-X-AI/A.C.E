@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/Fratres-X-AI/A.C.E/actions/workflows/ci.yml"><img src="https://github.com/Fratres-X-AI/A.C.E/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <img src="https://img.shields.io/badge/version-0.3.1-informational" alt="Version 0.3.1" />
+  <img src="https://img.shields.io/badge/version-0.3.2-informational" alt="Version 0.3.2" />
   <img src="https://img.shields.io/badge/maturity-prototype-0ea5e9" alt="Maturity: prototype" />
   <img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-3776AB" alt="Python" />
   <img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-blue" alt="License" />
