@@ -8,6 +8,7 @@ Thanks for helping make containment more reviewable. A.C.E is a **defensive** pr
 2. **Evidence over narrative** — prefer tests, demos, and measurable catch rates.
 3. **Fail closed** — when in doubt, block and audit; do not add silent bypasses.
 4. **No secrets in PRs** — never commit tokens, keys, or proprietary model weights.
+5. **License** — contributions are dual-licensable under AGPL-3.0-or-later and Fratres X AI commercial licenses (see [LICENSING.md](LICENSING.md)).
 
 ## Development setup
 

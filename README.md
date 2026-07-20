@@ -208,8 +208,15 @@ Defense stays defensive. No offensive capability generation.
 
 Copyright (C) 2026 Fratres X AI
 
-A.C.E is free software under the [GNU Affero General Public License v3 or later](LICENSE) (AGPL-3.0-or-later).  
-Source available for audit and downstream scrutiny. If you modify and run it as a network service, AGPL requires you to offer corresponding source to users of that service.
+**Dual licensed:**
+
+| Path | Terms | When to use |
+|------|--------|-------------|
+| **Open source** | [AGPL-3.0-or-later](LICENSE) | Audit, research, and use that complies with AGPL (including network source offer) |
+| **Commercial** | Paid license from Fratres X AI | Proprietary / closed-source products or SaaS where AGPL obligations are not acceptable |
+
+See [LICENSING.md](LICENSING.md) and [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md).  
+**Commercial inquiries:** [fratres-x.com](https://www.fratres-x.com)
 
 ## Fratres X AI
 

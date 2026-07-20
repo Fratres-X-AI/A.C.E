@@ -5,6 +5,10 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/). Versioning f
 
 ## [Unreleased]
 
+### Added
+
+- Dual-licensing docs: AGPL default + paid commercial path (`LICENSING.md`, `COMMERCIAL_LICENSE.md`)
+
 ## [0.3.2] — 2026-07-20
 
 ### Fixed
