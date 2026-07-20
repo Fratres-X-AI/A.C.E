@@ -49,35 +49,33 @@ Perfect blocking is impossible under neural compression and side channels. A.C.E
 
 ```mermaid
 flowchart TB
-    subgraph ingress [Ingress]
-        Input[UserInput]
-        EncFields[EncryptionFields]
-        Labels[IFCLabels]
+    subgraph ING["Ingress"]
+        A[User Input]
+        B[Field Encryption]
+        C[IFC Labels]
     end
-    subgraph boundary [Boundary]
-        TunnelIn[TunnelIngressGate]
-        Sandbox[SandboxRuntime]
-        Runner[InstrumentedRunner]
+    subgraph BND["Boundary"]
+        D[Tunnel Ingress Gate]
+        E[Sandbox Runtime]
+        F[Instrumented Runner]
     end
-    subgraph egress [Egress]
-        Guardian[OutputGuardian]
-        TunnelOut[TunnelEgressGate]
-        EgressCtrl[EgressController]
+    subgraph EGR["Egress"]
+        G[Output Guardian]
+        H[Tunnel Egress Gate]
+        I[Egress Controller]
     end
-    subgraph audit [Audit]
-        Log[TamperProofLog]
-        Metrics[ContainmentMetrics]
+    subgraph AUD["Audit"]
+        J[Tamper-Evident Log]
+        K[Containment Metrics]
     end
-    Input --> EncFields --> Labels
-    Labels --> TunnelIn
-    TunnelIn -->|"IFC + policy allow"| Sandbox
-    Sandbox --> Runner
-    Runner --> Guardian --> TunnelOut --> EgressCtrl
-    TunnelIn --> Log
-    Sandbox --> Log
-    Guardian --> Log
-    TunnelOut --> Log
-    Log --> Metrics
+    A --> B --> C --> D
+    D -->|IFC and policy allow| E --> F
+    F --> G --> H --> I
+    D --> J
+    E --> J
+    G --> J
+    H --> J
+    J --> K
 ```
 
 ## Quickstart
